@@ -1,13 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
 import { SplashScreen } from '@/screens';
-import { useAuthStore } from '@/store';
+import { useAuthStore } from '@/features/auth';
 import { Loading } from '@/components/ui';
 
+/**
+ * Public entry + navigation guard.
+ * Unauthenticated users never reach protected tabs.
+ */
 export default function Index() {
   const { isHydrated, isAuthenticated, hasCompletedOnboarding } = useAuthStore();
   const [showSplash, setShowSplash] = useState(true);
-
   const finishSplash = useCallback(() => setShowSplash(false), []);
 
   useEffect(() => {

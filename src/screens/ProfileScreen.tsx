@@ -15,17 +15,17 @@ interface ProfileScreenProps {
 
 const menuItems = [
   { label: 'Account', icon: 'person-outline' as const },
-  { label: 'Preferences', icon: 'options-outline' as const },
+  { label: 'Preferences', icon: 'options-outline' as const, action: 'settings' as const },
   { label: 'Notifications', icon: 'notifications-outline' as const },
   { label: 'Privacy', icon: 'shield-checkmark-outline' as const },
   { label: 'Help & Support', icon: 'help-circle-outline' as const },
 ];
 
 export function ProfileScreen({ onSettings, onSignOut }: ProfileScreenProps) {
-  const colors = useThemeColors();
+  const theme = useThemeColors();
 
   return (
-    <Screen scroll>
+    <Screen scroll tabBar>
       <Animated.View entering={FadeInDown.duration(400)} className="items-center pt-4">
         <Avatar name={mockUser.name} size="xl" />
         <Text className="mt-4 text-2xl font-bold text-ink dark:text-ink-dark">{mockUser.name}</Text>
@@ -38,24 +38,24 @@ export function ProfileScreen({ onSettings, onSignOut }: ProfileScreenProps) {
           </Text>
         </View>
 
-        <Card className="mt-8 w-full">
+        <Card className="mt-8 w-full" padded={false}>
           {menuItems.map((item, index) => (
             <Pressable
               key={item.label}
-              onPress={item.label === 'Preferences' ? onSettings : undefined}
-              className={`flex-row items-center py-3.5 ${
+              onPress={item.action === 'settings' ? onSettings : undefined}
+              className={`flex-row items-center px-4 py-3.5 ${
                 index < menuItems.length - 1
-                  ? 'border-b border-border/60 dark:border-border-dark'
+                  ? 'border-b border-border dark:border-border-dark'
                   : ''
               }`}
             >
               <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated dark:bg-surface-elevated-dark">
-                <Ionicons name={item.icon} size={18} color={colors.primary} />
+                <Ionicons name={item.icon} size={18} color={theme.primary} />
               </View>
               <Text className="flex-1 text-base font-medium text-ink dark:text-ink-dark">
                 {item.label}
               </Text>
-              <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
             </Pressable>
           ))}
         </Card>

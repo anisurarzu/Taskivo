@@ -1,12 +1,13 @@
 import { type ReactNode } from 'react';
 import { ScrollView, View, type ScrollViewProps, type ViewProps } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { cn } from '@/utils/cn';
 
 interface ScreenProps extends ViewProps {
   children: ReactNode;
   scroll?: boolean;
   padded?: boolean;
+  tabBar?: boolean;
   edges?: ('top' | 'right' | 'bottom' | 'left')[];
   scrollProps?: ScrollViewProps;
   className?: string;
@@ -17,13 +18,17 @@ export function Screen({
   children,
   scroll = false,
   padded = true,
+  tabBar = false,
   edges = ['top', 'left', 'right'],
   scrollProps,
   className,
   contentClassName,
   ...props
 }: ScreenProps) {
-  const content = (
+  const insets = useSafeAreaInsets();
+  const bottomPad = tabBar ? Math.max(insets.bottom, 8) + 72 : 24;
+
+  const body = (
     <View className={cn(padded && 'px-5', contentClassName)}>{children}</View>
   );
 
@@ -36,13 +41,16 @@ export function Screen({
       {scroll ? (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerClassName="pb-8 grow"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{ paddingBottom: bottomPad, flexGrow: 1 }}
           {...scrollProps}
         >
-          {content}
+          {body}
         </ScrollView>
       ) : (
-        content
+        <View className="flex-1" style={{ paddingBottom: tabBar ? bottomPad : 0 }}>
+          {body}
+        </View>
       )}
     </SafeAreaView>
   );

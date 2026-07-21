@@ -4,13 +4,21 @@ import { cn } from '@/utils/cn';
 interface CardProps extends ViewProps {
   className?: string;
   padded?: boolean;
+  elevated?: boolean;
 }
 
-export function Card({ children, className, padded = true, ...props }: CardProps) {
+export function Card({
+  children,
+  className,
+  padded = true,
+  elevated = true,
+  ...props
+}: CardProps) {
   return (
     <View
       className={cn(
-        'rounded-card border border-border/60 bg-surface dark:border-border-dark dark:bg-surface-dark',
+        'overflow-hidden rounded-card border border-border bg-card dark:border-border-dark dark:bg-card-dark',
+        elevated && 'shadow-card',
         padded && 'p-4',
         className,
       )}

@@ -49,7 +49,7 @@ export function PrimaryButton({
       }}
       style={animatedStyle}
       className={cn(
-        'items-center justify-center rounded-xl bg-primary active:bg-primary-600',
+        'items-center justify-center rounded-xl bg-primary active:bg-primary-dark',
         sizeClass,
         fullWidth && 'w-full',
         (disabled || loading) && 'opacity-50',

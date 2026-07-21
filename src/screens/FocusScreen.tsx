@@ -10,15 +10,17 @@ import Svg, { Circle, G } from 'react-native-svg';
 import { PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
+import { colors } from '@/theme/colors';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 const SIZE = 220;
 const STROKE = 14;
 const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
+const TOTAL = 25 * 60;
 
 export function FocusScreen() {
-  const [seconds, setSeconds] = useState(25 * 60);
+  const [seconds, setSeconds] = useState(TOTAL);
   const [running, setRunning] = useState(false);
   const progress = useSharedValue(0);
 
@@ -31,8 +33,7 @@ export function FocusScreen() {
   }, [running]);
 
   useEffect(() => {
-    const total = 25 * 60;
-    progress.value = withTiming(1 - seconds / total, { duration: 400 });
+    progress.value = withTiming(1 - seconds / TOTAL, { duration: 350 });
   }, [seconds, progress]);
 
   const animatedProps = useAnimatedProps(() => ({
@@ -45,7 +46,7 @@ export function FocusScreen() {
   const secs = (seconds % 60).toString().padStart(2, '0');
 
   return (
-    <Screen scroll>
+    <Screen scroll tabBar>
       <Animated.View entering={FadeInDown.duration(400)} className="items-center pt-2">
         <Text className="mb-1 self-start text-3xl font-bold text-ink dark:text-ink-dark">
           Focus
@@ -61,7 +62,7 @@ export function FocusScreen() {
                 cx={SIZE / 2}
                 cy={SIZE / 2}
                 r={RADIUS}
-                stroke="#E2E8F0"
+                stroke="#E5E7EB"
                 strokeWidth={STROKE}
                 fill="none"
               />
@@ -69,7 +70,7 @@ export function FocusScreen() {
                 cx={SIZE / 2}
                 cy={SIZE / 2}
                 r={RADIUS}
-                stroke="#4F46E5"
+                stroke={colors.primary}
                 strokeWidth={STROKE}
                 fill="none"
                 strokeLinecap="round"
@@ -97,7 +98,7 @@ export function FocusScreen() {
             label="Reset"
             onPress={() => {
               setRunning(false);
-              setSeconds(25 * 60);
+              setSeconds(TOTAL);
             }}
           />
         </View>
@@ -106,7 +107,7 @@ export function FocusScreen() {
           <Text className="mb-2 text-base font-semibold text-ink dark:text-ink-dark">
             Current focus
           </Text>
-          <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
+          <Text className="text-sm leading-6 text-ink-secondary dark:text-ink-dark-secondary">
             Finalize product roadmap — clear distractions and ship one meaningful block of work.
           </Text>
         </Card>

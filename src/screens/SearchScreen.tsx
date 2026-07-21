@@ -48,13 +48,8 @@ export function SearchScreen({ onBack, onTaskPress }: SearchScreenProps) {
             icon="search-outline"
           />
         ) : (
-          results.map((task, index) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              index={index}
-              onPress={() => onTaskPress(task.id)}
-            />
+          results.map((task) => (
+            <TaskCard key={task.id} task={task} onPress={() => onTaskPress(task.id)} />
           ))
         )}
       </Animated.View>

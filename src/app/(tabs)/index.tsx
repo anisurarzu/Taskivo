@@ -10,6 +10,8 @@ export default function HomeRoute() {
       onNotifications={() => router.push('/notifications')}
       onTaskPress={(id) => router.push(`/task/${id}`)}
       onCreateTask={() => router.push('/task/create')}
+      onFocus={() => router.push('/(tabs)/focus')}
+      onCalendar={() => router.push('/(tabs)/calendar')}
     />
   );
 }

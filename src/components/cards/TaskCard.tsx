@@ -14,25 +14,31 @@ import { useHaptics, useThemeColors } from '@/hooks';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-const priorityColors: Record<Task['priority'], string> = {
-  low: 'bg-accent/15 text-accent',
-  medium: 'bg-primary/15 text-primary',
-  high: 'bg-warning/15 text-warning',
-  urgent: 'bg-danger/15 text-danger',
+const priorityClass: Record<Task['priority'], string> = {
+  low: 'bg-accent/15',
+  medium: 'bg-primary/15',
+  high: 'bg-warning/15',
+  urgent: 'bg-danger/15',
+};
+
+const priorityText: Record<Task['priority'], string> = {
+  low: 'text-accent',
+  medium: 'text-primary',
+  high: 'text-warning',
+  urgent: 'text-danger',
 };
 
 interface TaskCardProps {
   task: Task;
   onPress?: () => void;
   onToggle?: () => void;
-  index?: number;
 }
 
-export function TaskCard({ task, onPress, onToggle, index = 0 }: TaskCardProps) {
+export function TaskCard({ task, onPress, onToggle }: TaskCardProps) {
   const colors = useThemeColors();
   const { success, light } = useHaptics();
   const scale = useSharedValue(1);
-  const checkScale = useSharedValue(task.isCompleted ? 1 : 0.85);
+  const checkScale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -45,10 +51,10 @@ export function TaskCard({ task, onPress, onToggle, index = 0 }: TaskCardProps) 
   return (
     <AnimatedPressable
       onPressIn={() => {
-        scale.value = withSpring(0.98, { damping: 16 });
+        scale.value = withSpring(0.985, { damping: 18 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 16 });
+        scale.value = withSpring(1, { damping: 18 });
       }}
       onPress={() => {
         light();
@@ -56,16 +62,17 @@ export function TaskCard({ task, onPress, onToggle, index = 0 }: TaskCardProps) 
       }}
       style={animatedStyle}
       className={cn(
-        'mb-3 flex-row items-start rounded-card border border-border/70 bg-surface p-4 dark:border-border-dark dark:bg-surface-dark',
-        task.isCompleted && 'opacity-60',
+        'mb-3 w-full flex-row items-start rounded-card border border-border bg-card p-4 dark:border-border-dark dark:bg-card-dark',
+        task.isCompleted && 'opacity-55',
       )}
     >
       <Pressable
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.isCompleted }}
-        hitSlop={10}
-        onPress={() => {
-          checkScale.value = withTiming(task.isCompleted ? 0.85 : 1.1, { duration: 160 }, () => {
+        hitSlop={12}
+        onPress={(e) => {
+          e.stopPropagation?.();
+          checkScale.value = withTiming(0.85, { duration: 80 }, () => {
             checkScale.value = withSpring(1);
           });
           success();
@@ -86,26 +93,16 @@ export function TaskCard({ task, onPress, onToggle, index = 0 }: TaskCardProps) 
         </Animated.View>
       </Pressable>
 
-      <View className="flex-1">
-        <View className="mb-2 flex-row items-center justify-between">
-          <View
-            className={cn(
-              'rounded-full px-2.5 py-1',
-              priorityColors[task.priority].split(' ')[0],
-            )}
-          >
-            <Text
-              className={cn(
-                'text-xs font-semibold',
-                priorityColors[task.priority].split(' ')[1],
-              )}
-            >
+      <View className="min-w-0 flex-1">
+        <View className="mb-2 flex-row flex-wrap items-center gap-2">
+          <View className={cn('rounded-full px-2.5 py-1', priorityClass[task.priority])}>
+            <Text className={cn('text-xs font-semibold', priorityText[task.priority])}>
               {PRIORITY_LABELS[task.priority]}
             </Text>
           </View>
           {task.dueAt ? (
             <View className="flex-row items-center">
-              <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+              <Ionicons name="time-outline" size={13} color={colors.textSecondary} />
               <Text className="ml-1 text-xs text-ink-secondary dark:text-ink-dark-secondary">
                 {formatTime(task.dueAt)}
               </Text>
@@ -114,21 +111,19 @@ export function TaskCard({ task, onPress, onToggle, index = 0 }: TaskCardProps) 
         </View>
 
         <Text
+          numberOfLines={2}
           className={cn(
-            'mb-1 text-base font-semibold text-ink dark:text-ink-dark',
+            'mb-1.5 text-base font-semibold leading-6 text-ink dark:text-ink-dark',
             task.isCompleted && 'line-through',
           )}
         >
           {task.title}
         </Text>
 
-        <View className="flex-row items-center">
-          <View className="rounded-md bg-surface-elevated px-2 py-1 dark:bg-surface-elevated-dark">
-            <Text className="text-xs font-medium text-ink-secondary dark:text-ink-dark-secondary">
-              {CATEGORY_LABELS[task.category]}
-            </Text>
-          </View>
-          {index >= 0 ? null : null}
+        <View className="self-start rounded-md bg-surface-elevated px-2 py-1 dark:bg-surface-elevated-dark">
+          <Text className="text-xs font-medium text-ink-secondary dark:text-ink-dark-secondary">
+            {CATEGORY_LABELS[task.category]}
+          </Text>
         </View>
       </View>
     </AnimatedPressable>

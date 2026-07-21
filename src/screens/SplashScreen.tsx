@@ -14,16 +14,15 @@ interface SplashScreenProps {
 }
 
 export function SplashScreen({ onFinish }: SplashScreenProps) {
-  const scale = useSharedValue(0.7);
+  const scale = useSharedValue(0.72);
   const opacity = useSharedValue(0);
   const tagOpacity = useSharedValue(0);
 
   useEffect(() => {
     scale.value = withSpring(1, { damping: 14, stiffness: 120 });
     opacity.value = withTiming(1, { duration: 500 });
-    tagOpacity.value = withDelay(300, withTiming(1, { duration: 500 }));
-
-    const timer = setTimeout(onFinish, 1800);
+    tagOpacity.value = withDelay(280, withTiming(1, { duration: 500 }));
+    const timer = setTimeout(onFinish, 1600);
     return () => clearTimeout(timer);
   }, [onFinish, opacity, scale, tagOpacity]);
 
@@ -44,7 +43,7 @@ export function SplashScreen({ onFinish }: SplashScreenProps) {
         </View>
         <Text className="text-4xl font-bold tracking-tight text-white">{APP_NAME}</Text>
       </Animated.View>
-      <Animated.Text style={tagStyle} className="text-center text-base text-white/80">
+      <Animated.Text style={tagStyle} className="text-center text-base text-white/85">
         {APP_TAGLINE}
       </Animated.Text>
     </View>

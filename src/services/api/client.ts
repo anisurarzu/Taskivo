@@ -1,8 +1,8 @@
 import axios from 'axios';
+import { secureStorage } from '@/utils/secure-storage';
 
 /**
- * API client scaffold — no business logic yet.
- * Wire base URL and interceptors when backend is ready.
+ * API client scaffold — JWT-ready interceptors.
  */
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.taskivo.app',
@@ -13,8 +13,18 @@ export const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
-  // Attach auth token from Secure Store when auth is implemented.
+apiClient.interceptors.request.use(async (config) => {
+  try {
+    const raw = await secureStorage.get('taskivo.auth.tokens');
+    if (raw) {
+      const tokens = JSON.parse(raw) as { accessToken?: string };
+      if (tokens.accessToken) {
+        config.headers.Authorization = `Bearer ${tokens.accessToken}`;
+      }
+    }
+  } catch {
+    // ignore missing tokens
+  }
   return config;
 });
 

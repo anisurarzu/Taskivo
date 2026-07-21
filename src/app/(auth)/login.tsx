@@ -1,17 +1,17 @@
-import { useRouter } from 'expo-router';
-import { LoginScreen } from '@/screens';
-import { useAuthStore } from '@/store';
+import { Redirect, useRouter } from 'expo-router';
+import { AuthLoginScreen, useAuthStore } from '@/features/auth';
 
 export default function LoginRoute() {
   const router = useRouter();
-  const signIn = useAuthStore((s) => s.signIn);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  if (isAuthenticated) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   return (
-    <LoginScreen
-      onLogin={() => {
-        signIn();
-        router.replace('/(tabs)');
-      }}
+    <AuthLoginScreen
+      onSuccess={() => router.replace('/(tabs)')}
       onRegister={() => router.push('/(auth)/register')}
       onForgotPassword={() => router.push('/(auth)/forgot-password')}
     />

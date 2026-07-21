@@ -14,6 +14,7 @@ import { PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { Screen } from '@/components/common';
 import { onboardingSlides } from '@/data/mock';
 import type { OnboardingSlide } from '@/types';
+import { colors } from '@/theme/colors';
 
 const { width } = Dimensions.get('window');
 
@@ -28,7 +29,7 @@ interface OnboardingScreenProps {
   onSkip: () => void;
 }
 
-export function OnboardingScreen({ onComplete, onSkip }: OnboardingScreenProps) {
+export function AuthOnboardingScreen({ onComplete, onSkip }: OnboardingScreenProps) {
   const [index, setIndex] = useState(0);
   const listRef = useRef<FlatList<OnboardingSlide>>(null);
 
@@ -75,7 +76,11 @@ export function OnboardingScreen({ onComplete, onSkip }: OnboardingScreenProps) 
           setIndex(next);
         }}
         renderItem={({ item }) => (
-          <Animated.View entering={FadeInRight.duration(400)} style={{ width }} className="px-8 pt-10">
+          <Animated.View
+            entering={FadeInRight.duration(400)}
+            style={{ width }}
+            className="px-8 pt-10"
+          >
             <View className="mb-10 h-56 items-center justify-center rounded-3xl bg-primary/10 dark:bg-primary/20">
               <View className="h-28 w-28 items-center justify-center rounded-[32px] bg-primary">
                 <Ionicons name={icons[item.illustration]} size={48} color="#FFFFFF" />
@@ -96,7 +101,9 @@ export function OnboardingScreen({ onComplete, onSkip }: OnboardingScreenProps) 
           {onboardingSlides.map((slide, i) => (
             <View
               key={slide.id}
-              className={`h-2 rounded-full ${i === index ? 'w-8 bg-primary' : 'w-2 bg-border dark:bg-border-dark'}`}
+              className={`h-2 rounded-full ${
+                i === index ? 'w-8 bg-primary' : 'w-2 bg-border dark:bg-border-dark'
+              }`}
             />
           ))}
         </View>

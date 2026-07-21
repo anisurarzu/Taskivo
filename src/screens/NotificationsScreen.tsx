@@ -6,6 +6,7 @@ import { Card } from '@/components/cards';
 import { IconButton } from '@/components/buttons';
 import { EmptyState } from '@/components/ui';
 import { formatRelativeTime } from '@/utils/format';
+import { colors } from '@/theme/colors';
 
 interface NotificationsScreenProps {
   onBack: () => void;
@@ -53,29 +54,27 @@ export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
             icon="notifications-off-outline"
           />
         ) : (
-          <Card padded={false} className="overflow-hidden">
+          <Card padded={false}>
             {notifications.map((item, index) => (
               <View
                 key={item.id}
                 className={`flex-row px-4 py-4 ${
                   index < notifications.length - 1
-                    ? 'border-b border-border/60 dark:border-border-dark'
+                    ? 'border-b border-border dark:border-border-dark'
                     : ''
                 }`}
               >
                 <View className="mr-3 h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
-                  <Ionicons name={item.icon} size={20} color="#4F46E5" />
+                  <Ionicons name={item.icon} size={20} color={colors.primary} />
                 </View>
-                <View className="flex-1">
+                <View className="min-w-0 flex-1">
                   <Text className="mb-0.5 text-base font-semibold text-ink dark:text-ink-dark">
                     {item.title}
                   </Text>
-                  <Text className="mb-1 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+                  <Text className="mb-1 text-sm leading-5 text-ink-secondary dark:text-ink-dark-secondary">
                     {item.body}
                   </Text>
-                  <Text className="text-xs text-ink-muted dark:text-ink-dark-secondary">
-                    {formatRelativeTime(item.time)}
-                  </Text>
+                  <Text className="text-xs text-ink-muted">{formatRelativeTime(item.time)}</Text>
                 </View>
               </View>
             ))}

@@ -64,10 +64,10 @@ export const mockTasks: Task[] = [
 ];
 
 export const mockStats: StatItem[] = [
-  { id: '1', label: 'Completed', value: 12, change: '+18%', trend: 'up', color: '#22C55E' },
-  { id: '2', label: 'In Progress', value: 5, change: '+2', trend: 'up', color: '#4F46E5' },
-  { id: '3', label: 'Focus Time', value: '3.2h', change: '+0.5h', trend: 'up', color: '#06B6D4' },
-  { id: '4', label: 'Streak', value: '8 days', change: 'Best', trend: 'neutral', color: '#7C3AED' },
+  { id: '1', label: 'Completed', value: 12, change: '+18%', trend: 'up', color: '#22C55E', icon: 'checkmark-circle-outline' },
+  { id: '2', label: 'In Progress', value: 5, change: '+2', trend: 'up', color: '#16A34A', icon: 'play-circle-outline' },
+  { id: '3', label: 'Focus Time', value: '3.2h', change: '+0.5h', trend: 'up', color: '#10B981', icon: 'timer-outline' },
+  { id: '4', label: 'Streak', value: '8 days', change: 'Best', trend: 'neutral', color: '#84CC16', icon: 'flame-outline' },
 ];
 
 export const mockActivity: ActivityItem[] = [

@@ -28,7 +28,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
         </Text>
         <Card className="mb-6">
           <View className="mb-4 flex-row items-center justify-between">
-            <View className="flex-1 pr-4">
+            <View className="mr-4 min-w-0 flex-1">
               <Text className="text-base font-semibold text-ink dark:text-ink-dark">Dark mode</Text>
               <Text className="mt-0.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
                 Use a darker color palette
@@ -37,12 +37,12 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             <Switch
               value={isDark}
               onValueChange={(value) => setPreference(value ? 'dark' : 'light')}
-              trackColor={{ false: '#E2E8F0', true: colors.primary }}
+              trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor="#FFFFFF"
             />
           </View>
-          <View className="flex-row items-center justify-between border-t border-border/60 pt-4 dark:border-border-dark">
-            <View className="flex-1 pr-4">
+          <View className="flex-row items-center justify-between border-t border-border pt-4 dark:border-border-dark">
+            <View className="mr-4 min-w-0 flex-1">
               <Text className="text-base font-semibold text-ink dark:text-ink-dark">
                 Match system
               </Text>
@@ -53,7 +53,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
             <Switch
               value={isSystem}
               onValueChange={(value) => setPreference(value ? 'system' : isDark ? 'dark' : 'light')}
-              trackColor={{ false: '#E2E8F0', true: colors.primary }}
+              trackColor={{ false: colors.border, true: colors.primary }}
               thumbColor="#FFFFFF"
             />
           </View>
@@ -62,7 +62,7 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
         <Text className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary dark:text-ink-dark-secondary">
           General
         </Text>
-        <Card>
+        <Card padded={false}>
           {[
             { title: 'Haptic feedback', value: 'On' },
             { title: 'Start of week', value: 'Monday' },
@@ -71,8 +71,8 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
           ].map((item, index, arr) => (
             <View
               key={item.title}
-              className={`flex-row items-center justify-between py-3.5 ${
-                index < arr.length - 1 ? 'border-b border-border/60 dark:border-border-dark' : ''
+              className={`flex-row items-center justify-between px-4 py-3.5 ${
+                index < arr.length - 1 ? 'border-b border-border dark:border-border-dark' : ''
               }`}
             >
               <Text className="text-base text-ink dark:text-ink-dark">{item.title}</Text>
