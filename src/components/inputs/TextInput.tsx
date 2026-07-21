@@ -12,6 +12,7 @@ interface AppTextInputProps extends TextInputProps {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
   containerClassName?: string;
+  size?: 'sm' | 'md';
 }
 
 export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
@@ -26,6 +27,7 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
       containerClassName,
       className,
       secureTextEntry,
+      size = 'md',
       ...props
     },
     ref,
@@ -33,6 +35,7 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
     const colors = useThemeColors();
     const [focused, setFocused] = useState(false);
     const [hidden, setHidden] = useState(secureTextEntry);
+    const heightClass = size === 'sm' ? 'h-10' : 'h-11';
 
     const resolvedRightIcon =
       secureTextEntry !== undefined
@@ -44,11 +47,14 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
     return (
       <View className={cn('w-full', containerClassName)}>
         {label ? (
-          <Text className="mb-2 text-sm font-medium text-ink dark:text-ink-dark">{label}</Text>
+          <Text className="mb-1.5 text-xs font-medium text-ink-secondary dark:text-ink-dark-secondary">
+            {label}
+          </Text>
         ) : null}
         <View
           className={cn(
-            'h-12 flex-row items-center rounded-xl border bg-surface px-4 dark:bg-surface-dark',
+            'flex-row items-center rounded-lg border bg-card px-3 dark:bg-card-dark',
+            heightClass,
             focused ? 'border-primary' : 'border-border dark:border-border-dark',
             error && 'border-danger',
           )}
@@ -56,9 +62,9 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
           {leftIcon ? (
             <Ionicons
               name={leftIcon}
-              size={20}
+              size={16}
               color={colors.textSecondary}
-              style={{ marginRight: 10 }}
+              style={{ marginRight: 8 }}
             />
           ) : null}
           <TextInput
@@ -73,13 +79,13 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
               setFocused(false);
               props.onBlur?.(e);
             }}
-            className={cn('flex-1 text-base text-ink dark:text-ink-dark', className)}
+            className={cn('flex-1 text-sm text-ink dark:text-ink-dark', className)}
             {...props}
           />
           {resolvedRightIcon ? (
             <Ionicons
               name={resolvedRightIcon}
-              size={20}
+              size={16}
               color={colors.textSecondary}
               onPress={() => {
                 if (secureTextEntry !== undefined) {
@@ -90,11 +96,9 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
             />
           ) : null}
         </View>
-        {error ? <Text className="mt-1.5 text-sm text-danger">{error}</Text> : null}
+        {error ? <Text className="mt-1 text-xs text-danger">{error}</Text> : null}
         {!error && hint ? (
-          <Text className="mt-1.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
-            {hint}
-          </Text>
+          <Text className="mt-1 text-xs text-ink-muted">{hint}</Text>
         ) : null}
       </View>
     );

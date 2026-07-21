@@ -13,15 +13,15 @@ export function SearchInput({ containerClassName, className, ...props }: SearchI
   return (
     <View
       className={cn(
-        'h-12 flex-row items-center rounded-xl border border-border bg-surface px-4 dark:border-border-dark dark:bg-surface-dark',
+        'h-11 flex-row items-center rounded-lg border border-border bg-card px-3 dark:border-border-dark dark:bg-card-dark',
         containerClassName,
       )}
     >
-      <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
+      <Ionicons name="search-outline" size={16} color={colors.textSecondary} />
       <TextInput
-        placeholder="Search tasks, tags, notes..."
+        placeholder="Search tasks..."
         placeholderTextColor={colors.textMuted}
-        className={cn('ml-3 flex-1 text-base text-ink dark:text-ink-dark', className)}
+        className={cn('ml-2 flex-1 text-sm text-ink dark:text-ink-dark', className)}
         returnKeyType="search"
         {...props}
       />

@@ -40,10 +40,10 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
       <Animated.View entering={FadeInDown.duration(420)}>
         <AuthHeader
           title="Create account"
-          subtitle="Start organizing your life in a calm, focused workspace."
+          subtitle="Set up your workspace in under a minute."
         />
 
-        <View className="mb-6 gap-4">
+        <View className="mb-4 gap-3">
           <Controller
             control={control}
             name="name"

@@ -31,7 +31,8 @@ export function PrimaryButton({
   }));
 
   const sizeClass =
-    size === 'sm' ? 'h-10 px-4' : size === 'lg' ? 'h-14 px-6' : 'h-12 px-5';
+    size === 'sm' ? 'h-9 px-3.5' : size === 'lg' ? 'h-12 px-5' : 'h-11 px-4';
+  const textClass = size === 'sm' ? 'text-xs' : 'text-sm';
 
   return (
     <AnimatedPressable
@@ -49,7 +50,7 @@ export function PrimaryButton({
       }}
       style={animatedStyle}
       className={cn(
-        'items-center justify-center rounded-xl bg-primary active:bg-primary-dark',
+        'items-center justify-center rounded-lg bg-primary active:bg-primary-dark',
         sizeClass,
         fullWidth && 'w-full',
         (disabled || loading) && 'opacity-50',
@@ -60,7 +61,7 @@ export function PrimaryButton({
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text className="text-base font-semibold text-white">{label}</Text>
+        <Text className={cn('font-semibold text-white', textClass)}>{label}</Text>
       )}
     </AnimatedPressable>
   );

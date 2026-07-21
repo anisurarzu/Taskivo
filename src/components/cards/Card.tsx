@@ -11,15 +11,15 @@ export function Card({
   children,
   className,
   padded = true,
-  elevated = true,
+  elevated = false,
   ...props
 }: CardProps) {
   return (
     <View
       className={cn(
-        'overflow-hidden rounded-card border border-border bg-card dark:border-border-dark dark:bg-card-dark',
-        elevated && 'shadow-card',
-        padded && 'p-4',
+        'overflow-hidden rounded-lg border border-border bg-card dark:border-border-dark dark:bg-card-dark',
+        elevated && 'shadow-soft',
+        padded && 'p-3.5',
         className,
       )}
       {...props}

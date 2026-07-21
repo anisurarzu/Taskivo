@@ -19,35 +19,36 @@ export function SocialAuthButtons({ onError }: SocialAuthButtonsProps) {
     }
   };
 
+  const providers = [
+    { key: 'google', icon: 'logo-google' as const, label: 'Google', action: () => google.mutateAsync() },
+    { key: 'apple', icon: 'logo-apple' as const, label: 'Apple', action: () => apple.mutateAsync() },
+    {
+      key: 'bio',
+      icon: 'finger-print-outline' as const,
+      label: 'Biometric',
+      action: () => biometric.mutateAsync(),
+      tint: colors.primary,
+    },
+  ];
+
   return (
-    <View className="gap-3">
-      <Pressable
-        onPress={() => handle(() => google.mutateAsync())}
-        className="h-12 flex-row items-center justify-center rounded-xl border border-border bg-card dark:border-border-dark dark:bg-card-dark"
-      >
-        <Ionicons name="logo-google" size={18} color={colors.text} />
-        <Text className="ml-2 text-sm font-semibold text-ink dark:text-ink-dark">
-          Continue with Google
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={() => handle(() => apple.mutateAsync())}
-        className="h-12 flex-row items-center justify-center rounded-xl border border-border bg-card dark:border-border-dark dark:bg-card-dark"
-      >
-        <Ionicons name="logo-apple" size={18} color={colors.text} />
-        <Text className="ml-2 text-sm font-semibold text-ink dark:text-ink-dark">
-          Continue with Apple
-        </Text>
-      </Pressable>
-      <Pressable
-        onPress={() => handle(() => biometric.mutateAsync())}
-        className="h-12 flex-row items-center justify-center rounded-xl border border-border bg-card dark:border-border-dark dark:bg-card-dark"
-      >
-        <Ionicons name="finger-print-outline" size={18} color={colors.primary} />
-        <Text className="ml-2 text-sm font-semibold text-ink dark:text-ink-dark">
-          Use biometrics
-        </Text>
-      </Pressable>
+    <View className="flex-row gap-2.5">
+      {providers.map((provider) => (
+        <Pressable
+          key={provider.key}
+          onPress={() => handle(provider.action)}
+          className="h-10 min-w-0 flex-1 flex-row items-center justify-center rounded-lg border border-border bg-card dark:border-border-dark dark:bg-card-dark"
+        >
+          <Ionicons
+            name={provider.icon}
+            size={16}
+            color={provider.tint ?? colors.text}
+          />
+          <Text className="ml-1.5 text-xs font-semibold text-ink dark:text-ink-dark">
+            {provider.label}
+          </Text>
+        </Pressable>
+      ))}
     </View>
   );
 }

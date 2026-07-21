@@ -3,14 +3,16 @@ import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common';
-import { TaskCard, Card } from '@/components/cards';
-import { IconButton } from '@/components/buttons';
+import { Card } from '@/components/cards';
 import { SectionHeader } from '@/components/ui';
 import { mockTasks } from '@/data/mock';
 import { cn } from '@/utils/cn';
+import { formatTime } from '@/utils/format';
 import { colors } from '@/theme/colors';
+import { CATEGORY_LABELS } from '@/constants';
+import { useThemeColors } from '@/hooks';
 
-const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -20,7 +22,6 @@ function daysInMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
 }
 
-/** Monday-first weekday index (0=Mon … 6=Sun) */
 function mondayIndex(date: Date) {
   return (date.getDay() + 6) % 7;
 }
@@ -38,6 +39,7 @@ interface CalendarScreenProps {
 }
 
 export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
+  const theme = useThemeColors();
   const today = useMemo(() => new Date(), []);
   const [cursor, setCursor] = useState(() => startOfMonth(today));
   const [selected, setSelected] = useState(today);
@@ -83,117 +85,159 @@ export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
 
   return (
     <Screen scroll tabBar>
-      <Animated.View entering={FadeInDown.duration(400)} className="pt-2">
-        <Text className="mb-1 text-3xl font-bold text-ink dark:text-ink-dark">Calendar</Text>
-        <Text className="mb-6 text-base text-ink-secondary dark:text-ink-dark-secondary">
-          Plan your month with clarity
-        </Text>
+      <Animated.View entering={FadeInDown.duration(350)} className="pt-1">
+        <View className="mb-4 flex-row items-center justify-between">
+          <View>
+            <Text className="text-2xl font-bold tracking-tight text-ink dark:text-ink-dark">
+              Calendar
+            </Text>
+            <Text className="mt-0.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+              {today.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => {
+              setCursor(startOfMonth(today));
+              setSelected(today);
+            }}
+            className="rounded-lg bg-primary/10 px-2.5 py-1.5"
+          >
+            <Text className="text-xs font-semibold text-primary">Today</Text>
+          </Pressable>
+        </View>
 
-        <Card className="mb-6">
-          <View className="mb-4 flex-row items-center justify-between">
-            <IconButton name="chevron-back" onPress={() => shiftMonth(-1)} variant="soft" />
-            <Text className="text-lg font-bold text-ink dark:text-ink-dark">{monthLabel}</Text>
-            <IconButton name="chevron-forward" onPress={() => shiftMonth(1)} variant="soft" />
+        <Card className="mb-5">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Pressable
+              onPress={() => shiftMonth(-1)}
+              hitSlop={10}
+              className="h-8 w-8 items-center justify-center rounded-md bg-surface-elevated dark:bg-surface-elevated-dark"
+            >
+              <Ionicons name="chevron-back" size={16} color={theme.text} />
+            </Pressable>
+            <Text className="text-sm font-semibold text-ink dark:text-ink-dark">{monthLabel}</Text>
+            <Pressable
+              onPress={() => shiftMonth(1)}
+              hitSlop={10}
+              className="h-8 w-8 items-center justify-center rounded-md bg-surface-elevated dark:bg-surface-elevated-dark"
+            >
+              <Ionicons name="chevron-forward" size={16} color={theme.text} />
+            </Pressable>
           </View>
 
-          <View className="mb-2 flex-row">
-            {WEEKDAYS.map((day) => (
-              <View key={day} className="flex-1 items-center py-1">
-                <Text className="text-[11px] font-semibold uppercase tracking-wide text-ink-muted">
-                  {day}
-                </Text>
+          <View className="mb-1 flex-row">
+            {WEEKDAYS.map((day, i) => (
+              <View key={`${day}-${i}`} className="h-7 flex-1 items-center justify-center">
+                <Text className="text-[11px] font-medium text-ink-muted">{day}</Text>
               </View>
             ))}
           </View>
 
-          <View className="flex-row flex-wrap">
-            {cells.map((date, index) => {
-              if (!date) {
-                return <View key={`empty-${index}`} className="mb-1 aspect-square w-[14.28%]" />;
-              }
+          {Array.from({ length: cells.length / 7 }, (_, week) => (
+            <View key={`week-${week}`} className="flex-row">
+              {cells.slice(week * 7, week * 7 + 7).map((date, index) => {
+                const key = date ? date.toISOString() : `e-${week}-${index}`;
+                if (!date) {
+                  return <View key={key} className="h-10 flex-1" />;
+                }
 
-              const isSelected = sameDay(date, selected);
-              const isToday = sameDay(date, today);
-              const hasEvent = eventDays.has(date.getDate());
+                const isSelected = sameDay(date, selected);
+                const isToday = sameDay(date, today);
+                const hasEvent = eventDays.has(date.getDate());
 
-              return (
-                <Pressable
-                  key={date.toISOString()}
-                  onPress={() => setSelected(date)}
-                  className="mb-1 w-[14.28%] items-center justify-center"
-                  style={{ aspectRatio: 1 }}
-                >
-                  <View
-                    className={cn(
-                      'h-9 w-9 items-center justify-center rounded-full',
-                      isSelected && 'bg-primary',
-                      !isSelected && isToday && 'bg-primary/10',
-                    )}
+                return (
+                  <Pressable
+                    key={key}
+                    onPress={() => setSelected(date)}
+                    className="h-10 flex-1 items-center justify-center"
                   >
-                    <Text
+                    <View
                       className={cn(
-                        'text-sm font-semibold',
-                        isSelected
-                          ? 'text-white'
-                          : isToday
-                            ? 'text-primary'
-                            : 'text-ink dark:text-ink-dark',
+                        'h-7 w-7 items-center justify-center rounded-full',
+                        isSelected && 'bg-primary',
+                        !isSelected && isToday && 'bg-primary/10',
                       )}
                     >
-                      {date.getDate()}
-                    </Text>
-                  </View>
-                  {hasEvent ? (
+                      <Text
+                        className={cn(
+                          'text-[13px] font-medium',
+                          isSelected
+                            ? 'text-white'
+                            : isToday
+                              ? 'text-primary'
+                              : 'text-ink dark:text-ink-dark',
+                        )}
+                      >
+                        {date.getDate()}
+                      </Text>
+                    </View>
                     <View
                       className={cn(
                         'mt-0.5 h-1 w-1 rounded-full',
-                        isSelected ? 'bg-white' : 'bg-primary',
+                        hasEvent
+                          ? isSelected
+                            ? 'bg-white'
+                            : 'bg-primary'
+                          : 'bg-transparent',
                       )}
                     />
-                  ) : (
-                    <View className="mt-0.5 h-1 w-1" />
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ))}
         </Card>
 
         <SectionHeader
           title="Agenda"
           subtitle={selected.toLocaleDateString('en-US', {
-            weekday: 'long',
+            weekday: 'short',
             month: 'short',
             day: 'numeric',
           })}
         />
 
         {agenda.length === 0 ? (
-          <Card className="items-center py-8">
-            <View className="mb-3 h-12 w-12 items-center justify-center rounded-2xl bg-primary/10">
-              <Ionicons name="calendar-outline" size={22} color={colors.primary} />
-            </View>
-            <Text className="text-base font-semibold text-ink dark:text-ink-dark">
-              No events today
+          <Card className="items-center py-6">
+            <Ionicons name="calendar-outline" size={22} color={colors.textMuted} />
+            <Text className="mt-2 text-sm font-medium text-ink dark:text-ink-dark">
+              Nothing scheduled
             </Text>
-            <Text className="mt-1 text-center text-sm text-ink-secondary dark:text-ink-dark-secondary">
-              Enjoy the open space — or schedule something meaningful.
-            </Text>
+            <Text className="mt-0.5 text-xs text-ink-muted">Pick another day or add a task</Text>
           </Card>
         ) : (
-          agenda.map((task) => (
-            <TaskCard key={task.id} task={task} onPress={() => onTaskPress(task.id)} />
-          ))
-        )}
-
-        <View className="mt-4">
-          <SectionHeader title="This month" subtitle="All scheduled tasks" />
-          {mockTasks
-            .filter((t) => !t.isCompleted)
-            .map((task) => (
-              <TaskCard key={task.id} task={task} onPress={() => onTaskPress(task.id)} />
+          <Card padded={false} className="overflow-hidden">
+            {agenda.map((task, index) => (
+              <Pressable
+                key={task.id}
+                onPress={() => onTaskPress(task.id)}
+                className={cn(
+                  'flex-row items-center px-3.5 py-3',
+                  index < agenda.length - 1 && 'border-b border-border dark:border-border-dark',
+                )}
+              >
+                <View className="mr-3 w-12">
+                  <Text className="text-xs font-semibold text-primary">
+                    {task.dueAt ? formatTime(task.dueAt) : '—'}
+                  </Text>
+                </View>
+                <View className="mr-2 h-8 w-0.5 rounded-full bg-primary" />
+                <View className="min-w-0 flex-1">
+                  <Text
+                    numberOfLines={1}
+                    className="text-sm font-medium text-ink dark:text-ink-dark"
+                  >
+                    {task.title}
+                  </Text>
+                  <Text className="mt-0.5 text-[11px] text-ink-muted">
+                    {CATEGORY_LABELS[task.category]}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />
+              </Pressable>
             ))}
-        </View>
+          </Card>
+        )}
       </Animated.View>
     </Screen>
   );

@@ -17,18 +17,18 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <View className={cn('mb-3 flex-row items-end justify-between', className)}>
-      <View className="flex-1 pr-4">
-        <Text className="text-lg font-bold text-ink dark:text-ink-dark">{title}</Text>
+    <View className={cn('mb-2.5 flex-row items-end justify-between', className)}>
+      <View className="min-w-0 flex-1 pr-3">
+        <Text className="text-base font-semibold text-ink dark:text-ink-dark">{title}</Text>
         {subtitle ? (
-          <Text className="mt-0.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+          <Text className="mt-0.5 text-xs text-ink-secondary dark:text-ink-dark-secondary">
             {subtitle}
           </Text>
         ) : null}
       </View>
       {actionLabel && onAction ? (
         <Pressable onPress={onAction} hitSlop={8}>
-          <Text className="text-sm font-semibold text-primary">{actionLabel}</Text>
+          <Text className="text-xs font-semibold text-primary">{actionLabel}</Text>
         </Pressable>
       ) : null}
     </View>

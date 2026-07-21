@@ -29,7 +29,8 @@ export function SecondaryButton({
   }));
 
   const sizeClass =
-    size === 'sm' ? 'h-10 px-4' : size === 'lg' ? 'h-14 px-6' : 'h-12 px-5';
+    size === 'sm' ? 'h-9 px-3.5' : size === 'lg' ? 'h-12 px-5' : 'h-11 px-4';
+  const textClass = size === 'sm' ? 'text-xs' : 'text-sm';
 
   return (
     <AnimatedPressable
@@ -47,7 +48,7 @@ export function SecondaryButton({
       }}
       style={animatedStyle}
       className={cn(
-        'items-center justify-center rounded-xl border border-border bg-surface dark:border-border-dark dark:bg-surface-dark',
+        'items-center justify-center rounded-lg border border-border bg-card dark:border-border-dark dark:bg-card-dark',
         sizeClass,
         fullWidth && 'w-full',
         disabled && 'opacity-50',
@@ -55,7 +56,7 @@ export function SecondaryButton({
       )}
       {...props}
     >
-      <Text className="text-base font-semibold text-ink dark:text-ink-dark">{label}</Text>
+      <Text className={cn('font-semibold text-ink dark:text-ink-dark', textClass)}>{label}</Text>
     </AnimatedPressable>
   );
 }

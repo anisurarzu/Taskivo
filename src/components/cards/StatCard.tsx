@@ -17,23 +17,23 @@ export function StatCard({ stat, className }: StatCardProps) {
 
   return (
     <Card className={cn('w-full', className)}>
-      <View className="mb-3 flex-row items-center justify-between">
+      <View className="mb-2.5 flex-row items-center justify-between">
         <View
-          className="h-10 w-10 items-center justify-center rounded-xl"
+          className="h-8 w-8 items-center justify-center rounded-lg"
           style={{ backgroundColor: `${stat.color ?? '#16A34A'}18` }}
         >
           <Ionicons
             name={(stat.icon as keyof typeof Ionicons.glyphMap) ?? 'analytics-outline'}
-            size={18}
+            size={15}
             color={stat.color ?? '#16A34A'}
           />
         </View>
         {stat.change ? (
           <View className="flex-row items-center">
-            <Ionicons name={trendIcon} size={14} color={trendColor} />
+            <Ionicons name={trendIcon} size={12} color={trendColor} />
             <Text
               className={cn(
-                'ml-1 text-xs font-medium',
+                'ml-0.5 text-[10px] font-medium',
                 stat.trend === 'down' ? 'text-danger' : 'text-success',
               )}
             >
@@ -42,11 +42,11 @@ export function StatCard({ stat, className }: StatCardProps) {
           </View>
         ) : null}
       </View>
-      <Text className="text-2xl font-bold text-ink dark:text-ink-dark" numberOfLines={1}>
+      <Text className="text-xl font-bold text-ink dark:text-ink-dark" numberOfLines={1}>
         {stat.value}
       </Text>
       <Text
-        className="mt-1 text-sm text-ink-secondary dark:text-ink-dark-secondary"
+        className="mt-0.5 text-xs text-ink-secondary dark:text-ink-dark-secondary"
         numberOfLines={1}
       >
         {stat.label}
