@@ -6,6 +6,7 @@ import { ThemeProvider } from './ThemeProvider';
 import { useAuthStore } from '@/features/auth';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useFocusUiStore } from '@/features/focus';
+import { apiClient, isMockApi } from '@/services/api';
 
 interface Props {
   children: ReactNode;
@@ -21,6 +22,10 @@ function AppHydrator({ children }: Props) {
   useEffect(() => {
     void hydrateAuth();
     hydratePrefs();
+    // Wake Render free tier before first login/register.
+    if (!isMockApi()) {
+      void apiClient.get('/health').catch(() => undefined);
+    }
   }, [hydrateAuth, hydratePrefs]);
 
   useEffect(() => {
