@@ -14,6 +14,12 @@ import type {
 
 function apiErrorMessage(error: unknown, fallback: string) {
   if (axios.isAxiosError(error)) {
+    if (error.code === 'ECONNABORTED') {
+      return 'Server is waking up. Wait a few seconds and try again.';
+    }
+    if (!error.response) {
+      return 'Cannot reach API. Check internet or try again in a moment.';
+    }
     const message = (error.response?.data as { message?: string } | undefined)?.message;
     if (message) return message;
   }
