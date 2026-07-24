@@ -11,23 +11,16 @@ A premium React Native (Expo) productivity app with auth, tasks, focus sessions,
 3. **P2** App wired via `EXPO_PUBLIC_USE_MOCK_API=false` (done)
 4. **P3** EAS build profiles in `eas.json` (done)
 
-## Run locally (production-like)
+## Run locally (production API)
 
-Terminal 1 — API:
+App points to live Render API by default:
 
-```bash
-cd server
-npm install
-npm run dev
+```
+EXPO_PUBLIC_API_URL=https://taskivo.onrender.com
+EXPO_PUBLIC_USE_MOCK_API=false
 ```
 
-Terminal 2 — app:
-
 ```bash
-# root .env should contain:
-# EXPO_PUBLIC_API_URL=http://localhost:4000
-# EXPO_PUBLIC_USE_MOCK_API=false
-
 nvm use
 npm install --legacy-peer-deps
 npm start
@@ -35,11 +28,19 @@ npm start
 
 Demo OTP: `123456`
 
-Physical device: set `EXPO_PUBLIC_API_URL` to your computer LAN IP (not localhost).
+Health check: https://taskivo.onrender.com/health
 
-## Mock mode
+### Optional local API
 
-Set `EXPO_PUBLIC_USE_MOCK_API=true` to use local MMKV services without the server.
+```bash
+cd server && npm run dev
+# then set EXPO_PUBLIC_API_URL=http://localhost:4000
+```
+
+## Next: durable database
+
+Current API uses **SQLite on the Render disk**, which can reset on redeploy/sleep.
+Production next step: **Render Postgres** (or similar) so users/tasks persist reliably.
 
 ## Tech stack
 

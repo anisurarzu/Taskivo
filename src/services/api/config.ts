@@ -9,6 +9,6 @@ export function isMockApi() {
 }
 
 export const API_CONFIG = {
-  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.taskivo.app',
+  baseUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://taskivo.onrender.com',
   useMock: isMockApi(),
 } as const;

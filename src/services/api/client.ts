@@ -5,7 +5,7 @@ import { secureStorage } from '@/utils/secure-storage';
  * API client scaffold — JWT-ready interceptors.
  */
 export const apiClient = axios.create({
-  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'https://api.taskivo.app',
+  baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'https://taskivo.onrender.com',
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',

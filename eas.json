@@ -11,12 +11,14 @@
     "preview": {
       "distribution": "internal",
       "env": {
+        "EXPO_PUBLIC_API_URL": "https://taskivo.onrender.com",
         "EXPO_PUBLIC_USE_MOCK_API": "false"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
+        "EXPO_PUBLIC_API_URL": "https://taskivo.onrender.com",
         "EXPO_PUBLIC_USE_MOCK_API": "false"
       }
     }
