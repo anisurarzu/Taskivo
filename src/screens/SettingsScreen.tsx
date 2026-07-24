@@ -1,10 +1,17 @@
-import { Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
 import { IconButton } from '@/components/buttons';
 import { useThemeStore } from '@/store';
+import { usePreferencesStore } from '@/store/preferences-store';
+import { useFocusUiStore, FOCUS_PRESETS_MINUTES } from '@/features/focus';
+import {
+  useRequestNotificationPermissionMutation,
+} from '@/features/notifications';
 import { colors } from '@/theme/colors';
+import { API_CONFIG } from '@/services/api/config';
+import { cn } from '@/utils/cn';
 
 interface SettingsScreenProps {
   onBack: () => void;
@@ -14,6 +21,17 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
   const { preference, setPreference } = useThemeStore();
   const isDark = preference === 'dark';
   const isSystem = preference === 'system';
+
+  const hapticsEnabled = usePreferencesStore((s) => s.hapticsEnabled);
+  const notificationsEnabled = usePreferencesStore((s) => s.notificationsEnabled);
+  const defaultFocusMinutes = usePreferencesStore((s) => s.defaultFocusMinutes);
+  const weekStartsOn = usePreferencesStore((s) => s.weekStartsOn);
+  const setHapticsEnabled = usePreferencesStore((s) => s.setHapticsEnabled);
+  const setNotificationsEnabled = usePreferencesStore((s) => s.setNotificationsEnabled);
+  const setDefaultFocusMinutes = usePreferencesStore((s) => s.setDefaultFocusMinutes);
+  const setWeekStartsOn = usePreferencesStore((s) => s.setWeekStartsOn);
+  const setFocusDuration = useFocusUiStore((s) => s.setDurationMinutes);
+  const requestPermission = useRequestNotificationPermissionMutation();
 
   return (
     <Screen scroll>
@@ -62,25 +80,121 @@ export function SettingsScreen({ onBack }: SettingsScreenProps) {
         <Text className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary dark:text-ink-dark-secondary">
           General
         </Text>
-        <Card padded={false}>
-          {[
-            { title: 'Haptic feedback', value: 'On' },
-            { title: 'Start of week', value: 'Monday' },
-            { title: 'Default focus', value: '25 min' },
-            { title: 'Language', value: 'English' },
-          ].map((item, index, arr) => (
-            <View
-              key={item.title}
-              className={`flex-row items-center justify-between px-4 py-3.5 ${
-                index < arr.length - 1 ? 'border-b border-border dark:border-border-dark' : ''
-              }`}
-            >
-              <Text className="text-base text-ink dark:text-ink-dark">{item.title}</Text>
-              <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
-                {item.value}
+        <Card className="mb-6">
+          <View className="mb-4 flex-row items-center justify-between">
+            <View className="mr-4 min-w-0 flex-1">
+              <Text className="text-base font-semibold text-ink dark:text-ink-dark">
+                Haptic feedback
+              </Text>
+              <Text className="mt-0.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+                Light taps on buttons and actions
               </Text>
             </View>
-          ))}
+            <Switch
+              value={hapticsEnabled}
+              onValueChange={setHapticsEnabled}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View className="mb-4 flex-row items-center justify-between border-t border-border pt-4 dark:border-border-dark">
+            <View className="mr-4 min-w-0 flex-1">
+              <Text className="text-base font-semibold text-ink dark:text-ink-dark">
+                Notifications
+              </Text>
+              <Text className="mt-0.5 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+                Task due reminders on this device
+              </Text>
+            </View>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={(value) => {
+                setNotificationsEnabled(value);
+                if (value) void requestPermission.mutateAsync();
+              }}
+              trackColor={{ false: colors.border, true: colors.primary }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+
+          <View className="border-t border-border pt-4 dark:border-border-dark">
+            <Text className="mb-2 text-base font-semibold text-ink dark:text-ink-dark">
+              Start of week
+            </Text>
+            <View className="flex-row gap-2">
+              {(['monday', 'sunday'] as const).map((value) => (
+                <Pressable
+                  key={value}
+                  onPress={() => setWeekStartsOn(value)}
+                  className={cn(
+                    'rounded-full px-3 py-1.5',
+                    weekStartsOn === value
+                      ? 'bg-primary'
+                      : 'bg-surface-elevated dark:bg-surface-elevated-dark',
+                  )}
+                >
+                  <Text
+                    className={cn(
+                      'text-xs font-semibold capitalize',
+                      weekStartsOn === value ? 'text-white' : 'text-ink dark:text-ink-dark',
+                    )}
+                  >
+                    {value}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </Card>
+
+        <Text className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary dark:text-ink-dark-secondary">
+          Focus
+        </Text>
+        <Card className="mb-6">
+          <Text className="mb-2 text-base font-semibold text-ink dark:text-ink-dark">
+            Default focus length
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {FOCUS_PRESETS_MINUTES.map((preset) => (
+              <Pressable
+                key={preset}
+                onPress={() => {
+                  setDefaultFocusMinutes(preset);
+                  setFocusDuration(preset);
+                }}
+                className={cn(
+                  'rounded-full px-3 py-1.5',
+                  defaultFocusMinutes === preset
+                    ? 'bg-primary'
+                    : 'bg-surface-elevated dark:bg-surface-elevated-dark',
+                )}
+              >
+                <Text
+                  className={cn(
+                    'text-xs font-semibold',
+                    defaultFocusMinutes === preset
+                      ? 'text-white'
+                      : 'text-ink dark:text-ink-dark',
+                  )}
+                >
+                  {preset}m
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </Card>
+
+        <Text className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-secondary dark:text-ink-dark-secondary">
+          Developer
+        </Text>
+        <Card>
+          <Text className="text-base font-semibold text-ink dark:text-ink-dark">API mode</Text>
+          <Text className="mt-1 text-sm text-ink-secondary dark:text-ink-dark-secondary">
+            {API_CONFIG.useMock
+              ? 'Using local mock services (MMKV). Set EXPO_PUBLIC_USE_MOCK_API=false to call the backend.'
+              : `Live API · ${API_CONFIG.baseUrl}`}
+          </Text>
         </Card>
       </Animated.View>
     </Screen>

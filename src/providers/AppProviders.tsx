@@ -4,17 +4,29 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { QueryProvider } from './QueryProvider';
 import { ThemeProvider } from './ThemeProvider';
 import { useAuthStore } from '@/features/auth';
+import { usePreferencesStore } from '@/store/preferences-store';
+import { useFocusUiStore } from '@/features/focus';
 
 interface Props {
   children: ReactNode;
 }
 
-function AuthHydrator({ children }: Props) {
-  const hydrate = useAuthStore((s) => s.hydrate);
+function AppHydrator({ children }: Props) {
+  const hydrateAuth = useAuthStore((s) => s.hydrate);
+  const hydratePrefs = usePreferencesStore((s) => s.hydrate);
+  const setDurationMinutes = useFocusUiStore((s) => s.setDurationMinutes);
+  const defaultFocusMinutes = usePreferencesStore((s) => s.defaultFocusMinutes);
+  const prefsHydrated = usePreferencesStore((s) => s.hydrated);
 
   useEffect(() => {
-    void hydrate();
-  }, [hydrate]);
+    void hydrateAuth();
+    hydratePrefs();
+  }, [hydrateAuth, hydratePrefs]);
+
+  useEffect(() => {
+    if (!prefsHydrated) return;
+    setDurationMinutes(defaultFocusMinutes);
+  }, [prefsHydrated, defaultFocusMinutes, setDurationMinutes]);
 
   return <>{children}</>;
 }
@@ -25,7 +37,7 @@ export function AppProviders({ children }: Props) {
       <QueryProvider>
         <ThemeProvider>
           <BottomSheetModalProvider>
-            <AuthHydrator>{children}</AuthHydrator>
+            <AppHydrator>{children}</AppHydrator>
           </BottomSheetModalProvider>
         </ThemeProvider>
       </QueryProvider>

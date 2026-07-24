@@ -1,19 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { taskService } from '../services/task-service';
 import type { CreateTaskInput, TaskListFilter, UpdateTaskInput } from '../types';
 import { taskKeys } from './query-keys';
+import { taskRepository } from '../services/task-repository';
+import { cancelTaskReminder, syncTaskReminder } from '@/features/notifications';
+import { usePreferencesStore } from '@/store/preferences-store';
+import { notificationKeys } from '@/features/notifications';
 
 export function useTasksQuery(filter?: TaskListFilter) {
   return useQuery({
     queryKey: taskKeys.list(filter),
-    queryFn: () => taskService.list(filter),
+    queryFn: () => taskRepository.list(filter),
   });
 }
 
 export function useTaskQuery(id: string | undefined) {
   return useQuery({
     queryKey: taskKeys.detail(id ?? ''),
-    queryFn: () => taskService.getById(id!),
+    queryFn: () => taskRepository.getById(id!),
     enabled: Boolean(id),
   });
 }
@@ -21,9 +24,13 @@ export function useTaskQuery(id: string | undefined) {
 export function useCreateTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (input: CreateTaskInput) => taskService.create(input),
-    onSuccess: async () => {
+    mutationFn: (input: CreateTaskInput) => taskRepository.create(input),
+    onSuccess: async (task) => {
+      if (usePreferencesStore.getState().notificationsEnabled) {
+        await syncTaskReminder(task);
+      }
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }
@@ -32,10 +39,14 @@ export function useUpdateTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, input }: { id: string; input: UpdateTaskInput }) =>
-      taskService.update(id, input),
-    onSuccess: async (_task, variables) => {
+      taskRepository.update(id, input),
+    onSuccess: async (task, variables) => {
+      if (usePreferencesStore.getState().notificationsEnabled) {
+        await syncTaskReminder(task);
+      }
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
       await queryClient.invalidateQueries({ queryKey: taskKeys.detail(variables.id) });
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }
@@ -43,10 +54,14 @@ export function useUpdateTaskMutation() {
 export function useToggleTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => taskService.toggleComplete(id),
-    onSuccess: async (_task, id) => {
+    mutationFn: (id: string) => taskRepository.toggleComplete(id),
+    onSuccess: async (task, id) => {
+      if (usePreferencesStore.getState().notificationsEnabled) {
+        await syncTaskReminder(task);
+      }
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
       await queryClient.invalidateQueries({ queryKey: taskKeys.detail(id) });
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }
@@ -54,9 +69,13 @@ export function useToggleTaskMutation() {
 export function useDeleteTaskMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => taskService.remove(id),
+    mutationFn: async (id: string) => {
+      await cancelTaskReminder(id);
+      await taskRepository.remove(id);
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      await queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }

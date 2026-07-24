@@ -1,6 +1,7 @@
 export * from './types';
 export * from './validation/schemas';
 export { taskService } from './services/task-service';
+export { taskRepository } from './services/task-repository';
 export { taskStorage } from './services/task-storage';
 export { seedTasks } from './services/seed';
 export { taskApi } from './api/task-api';

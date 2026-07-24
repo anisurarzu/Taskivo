@@ -5,44 +5,75 @@ import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
 import { Avatar } from '@/components/ui';
 import { SecondaryButton } from '@/components/buttons';
-import { mockUser } from '@/data/mock';
 import { useThemeColors } from '@/hooks';
+import { useAuthStore } from '@/features/auth';
+import { useAnalytics } from '@/features/analytics';
+import { API_CONFIG } from '@/services/api/config';
 
 interface ProfileScreenProps {
   onSettings: () => void;
+  onNotifications: () => void;
   onSignOut: () => void;
 }
 
-const menuItems = [
-  { label: 'Account', icon: 'person-outline' as const },
-  { label: 'Preferences', icon: 'options-outline' as const, action: 'settings' as const },
-  { label: 'Notifications', icon: 'notifications-outline' as const },
-  { label: 'Privacy', icon: 'shield-checkmark-outline' as const },
-  { label: 'Help & Support', icon: 'help-circle-outline' as const },
-];
-
-export function ProfileScreen({ onSettings, onSignOut }: ProfileScreenProps) {
+export function ProfileScreen({ onSettings, onNotifications, onSignOut }: ProfileScreenProps) {
   const theme = useThemeColors();
+  const user = useAuthStore((s) => s.user);
+  const { completed, streak } = useAnalytics();
+
+  const name = user?.name ?? 'Taskivo user';
+  const email = user?.email ?? 'signed-in locally';
+
+  const menuItems = [
+    { label: 'Preferences', icon: 'options-outline' as const, onPress: onSettings },
+    {
+      label: 'Notifications',
+      icon: 'notifications-outline' as const,
+      onPress: onNotifications,
+    },
+    { label: 'Account', icon: 'person-outline' as const, onPress: onSettings },
+    {
+      label: 'Data source',
+      icon: 'cloud-outline' as const,
+      value: API_CONFIG.useMock ? 'Local mock' : 'API',
+      onPress: onSettings,
+    },
+  ];
 
   return (
     <Screen scroll tabBar>
       <Animated.View entering={FadeInDown.duration(400)} className="items-center pt-4">
-        <Avatar name={mockUser.name} size="xl" />
-        <Text className="mt-4 text-2xl font-bold text-ink dark:text-ink-dark">{mockUser.name}</Text>
+        <Avatar name={name} uri={user?.avatarUrl} size="xl" />
+        <Text className="mt-4 text-2xl font-bold text-ink dark:text-ink-dark">{name}</Text>
         <Text className="mt-1 text-sm text-ink-secondary dark:text-ink-dark-secondary">
-          {mockUser.email}
+          {email}
         </Text>
         <View className="mt-3 rounded-full bg-primary/10 px-3 py-1">
           <Text className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {mockUser.plan} plan
+            {user?.emailVerified ? 'Verified' : 'Local'} account
           </Text>
         </View>
 
-        <Card className="mt-8 w-full" padded={false}>
+        <View className="mt-6 w-full flex-row gap-3">
+          <Card className="min-w-0 flex-1 items-center py-3">
+            <Text className="text-xl font-bold text-ink dark:text-ink-dark">{completed}</Text>
+            <Text className="mt-1 text-xs text-ink-secondary dark:text-ink-dark-secondary">
+              Completed
+            </Text>
+          </Card>
+          <Card className="min-w-0 flex-1 items-center py-3">
+            <Text className="text-xl font-bold text-ink dark:text-ink-dark">{streak}d</Text>
+            <Text className="mt-1 text-xs text-ink-secondary dark:text-ink-dark-secondary">
+              Focus streak
+            </Text>
+          </Card>
+        </View>
+
+        <Card className="mt-6 w-full" padded={false}>
           {menuItems.map((item, index) => (
             <Pressable
               key={item.label}
-              onPress={item.action === 'settings' ? onSettings : undefined}
+              onPress={item.onPress}
               className={`flex-row items-center px-4 py-3.5 ${
                 index < menuItems.length - 1
                   ? 'border-b border-border dark:border-border-dark'
@@ -55,6 +86,11 @@ export function ProfileScreen({ onSettings, onSignOut }: ProfileScreenProps) {
               <Text className="flex-1 text-base font-medium text-ink dark:text-ink-dark">
                 {item.label}
               </Text>
+              {'value' in item && item.value ? (
+                <Text className="mr-2 text-xs text-ink-secondary dark:text-ink-dark-secondary">
+                  {item.value}
+                </Text>
+              ) : null}
               <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
             </Pressable>
           ))}

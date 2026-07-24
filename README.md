@@ -2,7 +2,7 @@
 
 **Organize Your Life Smarter.**
 
-A premium React Native (Expo) productivity app foundation with a clean architecture, modern UI, and dark mode — ready for feature implementation.
+A premium React Native (Expo) productivity app with auth, tasks, focus sessions, analytics, and local reminders.
 
 ## Tech stack
 
@@ -22,9 +22,19 @@ npm start
 
 Then scan the QR code with **Expo Go (SDK 54)**.
 
+Demo OTP: `123456`
+
+## Environment
+
+Copy `.env.example`:
+
+- `EXPO_PUBLIC_API_URL` — backend base URL
+- `EXPO_PUBLIC_USE_MOCK_API=true` — local MMKV mock services (default)
+
+Set `EXPO_PUBLIC_USE_MOCK_API=false` when a real API is ready. Tasks/focus go through repository layers that already swap to Axios.
+
 ## Notes
 
-- UI and navigation only — no backend business logic yet.
 - Compatible with **Expo Go SDK 54**.
 - `react-native-mmkv` needs a custom/dev client; memory fallback is used in Expo Go.
-- Mock data lives in `src/data/mock.ts`.
+- Task due reminders use `expo-notifications` (permission required on device).

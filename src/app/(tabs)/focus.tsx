@@ -1,4 +1,4 @@
-import { FocusScreen } from '@/screens';
+import { FocusScreen } from '@/features/focus';
 
 export default function FocusRoute() {
   return <FocusScreen />;

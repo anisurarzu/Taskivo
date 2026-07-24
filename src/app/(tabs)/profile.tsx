@@ -14,6 +14,7 @@ export default function ProfileRoute() {
   return (
     <ProfileScreen
       onSettings={() => router.push('/settings')}
+      onNotifications={() => router.push('/notifications')}
       onSignOut={async () => {
         await logoutMutation.mutateAsync();
         router.replace('/(auth)/login');
