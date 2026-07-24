@@ -38,6 +38,7 @@ export type ForgotPasswordPayload = {
 export type VerifyOtpPayload = {
   email: string;
   otp: string;
+  purpose?: 'register' | 'reset';
 };
 
 export type ResetPasswordPayload = {

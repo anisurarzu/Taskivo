@@ -2,39 +2,47 @@
 
 **Organize Your Life Smarter.**
 
-A premium React Native (Expo) productivity app with auth, tasks, focus sessions, analytics, and local reminders.
+A premium React Native (Expo) productivity app with auth, tasks, focus sessions, analytics, and a real JWT API.
 
-## Tech stack
+## Production steps (current)
 
-- Expo SDK 54 + React Native + TypeScript
-- Expo Router (file-based navigation)
-- NativeWind (Tailwind CSS)
-- Zustand · React Query · React Hook Form · Axios
-- Reanimated · Gesture Handler · SVG · MMKV · Secure Store · Notifications
+1. **P0** Client uses real user/task/focus data on Home (done)
+2. **P1** Real API in `server/` — auth, tasks, focus (done)
+3. **P2** App wired via `EXPO_PUBLIC_USE_MOCK_API=false` (done)
+4. **P3** EAS build profiles in `eas.json` (done)
 
-## Getting started
+## Run locally (production-like)
+
+Terminal 1 — API:
 
 ```bash
+cd server
+npm install
+npm run dev
+```
+
+Terminal 2 — app:
+
+```bash
+# root .env should contain:
+# EXPO_PUBLIC_API_URL=http://localhost:4000
+# EXPO_PUBLIC_USE_MOCK_API=false
+
 nvm use
 npm install --legacy-peer-deps
 npm start
 ```
 
-Then scan the QR code with **Expo Go (SDK 54)**.
-
 Demo OTP: `123456`
 
-## Environment
+Physical device: set `EXPO_PUBLIC_API_URL` to your computer LAN IP (not localhost).
 
-Copy `.env.example`:
+## Mock mode
 
-- `EXPO_PUBLIC_API_URL` — backend base URL
-- `EXPO_PUBLIC_USE_MOCK_API=true` — local MMKV mock services (default)
+Set `EXPO_PUBLIC_USE_MOCK_API=true` to use local MMKV services without the server.
 
-Set `EXPO_PUBLIC_USE_MOCK_API=false` when a real API is ready. Tasks/focus go through repository layers that already swap to Axios.
+## Tech stack
 
-## Notes
-
-- Compatible with **Expo Go SDK 54**.
-- `react-native-mmkv` needs a custom/dev client; memory fallback is used in Expo Go.
-- Task due reminders use `expo-notifications` (permission required on device).
+- Expo SDK 54 + React Native + TypeScript
+- Expo Router · NativeWind · Zustand · React Query · RHF · Axios
+- API: Express + SQLite + JWT (`server/`)

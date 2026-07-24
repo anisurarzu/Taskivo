@@ -7,9 +7,16 @@ import { Screen } from '@/components/common';
 import { TaskCard, Card, StatGrid } from '@/components/cards';
 import { SearchInput } from '@/components/inputs';
 import { Avatar, SectionHeader, Loading, EmptyState } from '@/components/ui';
-import { mockActivity, mockStats, mockUser } from '@/data/mock';
 import { formatDate, formatRelativeTime, getGreeting } from '@/utils/format';
 import { colors } from '@/theme/colors';
+import { useAuthStore } from '@/features/auth';
+import { useAnalytics } from '@/features/analytics';
+import {
+  formatFocusDuration,
+  getFocusSecondsThisWeek,
+  useFocusSessionsQuery,
+} from '@/features/focus';
+import { CATEGORY_LABELS } from '@/constants';
 import {
   getActiveTasks,
   getTaskProgress,
@@ -17,7 +24,10 @@ import {
   getUpcomingTasks,
   useTasksQuery,
   useToggleTaskMutation,
+  type Task,
+  type TaskCategory,
 } from '@/features/tasks';
+import type { ActivityItem, StatItem } from '@/types';
 
 interface HomeScreenProps {
   onSearch: () => void;
@@ -28,11 +38,55 @@ interface HomeScreenProps {
   onCalendar?: () => void;
 }
 
-const habits = [
-  { id: '1', label: 'Morning stretch', progress: 0.8 },
-  { id: '2', label: 'Read 20 pages', progress: 0.45 },
-  { id: '3', label: 'Drink water', progress: 0.9 },
-];
+function buildActivity(tasks: Task[]): ActivityItem[] {
+  return tasks
+    .slice()
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    .slice(0, 6)
+    .map((task) => {
+      if (task.isCompleted) {
+        return {
+          id: `act_${task.id}_done`,
+          title: 'Task completed',
+          subtitle: task.title,
+          timestamp: task.completedAt ?? task.updatedAt,
+          type: 'completed' as const,
+        };
+      }
+      return {
+        id: `act_${task.id}_upd`,
+        title: 'Task updated',
+        subtitle: task.title,
+        timestamp: task.updatedAt,
+        type: 'updated' as const,
+      };
+    });
+}
+
+function buildCategoryProgress(tasks: Task[]) {
+  const activeCategories = Object.keys(CATEGORY_LABELS) as TaskCategory[];
+  return activeCategories
+    .map((category) => {
+      const items = tasks.filter((task) => task.category === category);
+      if (items.length === 0) return null;
+      const done = items.filter((task) => task.isCompleted).length;
+      return {
+        id: category,
+        label: CATEGORY_LABELS[category],
+        progress: done / items.length,
+        total: items.length,
+        done,
+      };
+    })
+    .filter(Boolean)
+    .slice(0, 3) as Array<{
+    id: string;
+    label: string;
+    progress: number;
+    total: number;
+    done: number;
+  }>;
+}
 
 export function HomeScreen({
   onSearch,
@@ -44,8 +98,14 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const { width } = useWindowDimensions();
   const isCompact = width < 380;
+  const user = useAuthStore((s) => s.user);
   const { data: tasks = [], isLoading, isError, refetch } = useTasksQuery();
+  const { data: sessions = [] } = useFocusSessionsQuery();
+  const { stats, streak } = useAnalytics();
   const toggleTask = useToggleTaskMutation();
+
+  const displayName = user?.name?.trim() || user?.email?.split('@')[0] || 'there';
+  const firstName = displayName.split(' ')[0] ?? displayName;
 
   const todayTasks = useMemo(() => {
     const dueToday = getTodayTasks(tasks);
@@ -56,21 +116,28 @@ export function HomeScreen({
   const upcoming = useMemo(() => getUpcomingTasks(tasks).slice(0, 4), [tasks]);
   const completedCount = tasks.filter((t) => t.isCompleted).length;
   const progress = getTaskProgress(tasks);
+  const weekFocusSeconds = getFocusSecondsThisWeek(sessions);
+  const weekFocusGoalSeconds = 15 * 60 * 60;
+  const categoryProgress = useMemo(() => buildCategoryProgress(tasks), [tasks]);
+  const activity = useMemo(() => buildActivity(tasks), [tasks]);
 
-  const dashboardStats = useMemo(() => mockStats, []);
+  const dashboardStats = useMemo<StatItem[]>(() => {
+    if (stats.length > 0) return stats.slice(0, 4);
+    return [];
+  }, [stats]);
 
   return (
     <Screen scroll tabBar>
       <Animated.View entering={FadeInDown.duration(400)} className="pt-2">
         <View className="mb-5 flex-row items-center justify-between">
           <View className="min-w-0 flex-1 flex-row items-center pr-3">
-            <Avatar name={mockUser.name} size="md" />
+            <Avatar name={displayName} uri={user?.avatarUrl} size="md" />
             <View className="ml-3 min-w-0 flex-1">
               <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
                 {getGreeting()}
               </Text>
               <Text numberOfLines={1} className="text-xl font-bold text-ink dark:text-ink-dark">
-                {mockUser.name.split(' ')[0]}
+                {firstName}
               </Text>
             </View>
           </View>
@@ -138,35 +205,47 @@ export function HomeScreen({
         </View>
       </Animated.View>
 
-      <Animated.View entering={FadeInUp.delay(140).duration(450)} className="mt-6">
-        <SectionHeader title="Statistics" />
-        <StatGrid stats={dashboardStats.slice(0, 4)} />
-      </Animated.View>
+      {dashboardStats.length > 0 ? (
+        <Animated.View entering={FadeInUp.delay(140).duration(450)} className="mt-6">
+          <SectionHeader title="Statistics" />
+          <StatGrid stats={dashboardStats} />
+        </Animated.View>
+      ) : null}
 
       <Animated.View entering={FadeInUp.delay(180).duration(450)} className="mt-2">
-        <SectionHeader title="Habits" subtitle="Stay consistent" />
+        <SectionHeader title="By category" subtitle="Your task mix" />
         <Card>
-          {habits.map((habit, index) => (
-            <View
-              key={habit.id}
-              className={`py-3 ${index < habits.length - 1 ? 'border-b border-border dark:border-border-dark' : ''}`}
-            >
-              <View className="mb-2 flex-row items-center justify-between">
-                <Text className="text-sm font-semibold text-ink dark:text-ink-dark">
-                  {habit.label}
-                </Text>
-                <Text className="text-xs font-medium text-primary">
-                  {Math.round(habit.progress * 100)}%
-                </Text>
+          {categoryProgress.length === 0 ? (
+            <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
+              Create tasks to see category progress.
+            </Text>
+          ) : (
+            categoryProgress.map((item, index) => (
+              <View
+                key={item.id}
+                className={`py-3 ${
+                  index < categoryProgress.length - 1
+                    ? 'border-b border-border dark:border-border-dark'
+                    : ''
+                }`}
+              >
+                <View className="mb-2 flex-row items-center justify-between">
+                  <Text className="text-sm font-semibold text-ink dark:text-ink-dark">
+                    {item.label}
+                  </Text>
+                  <Text className="text-xs font-medium text-primary">
+                    {item.done}/{item.total}
+                  </Text>
+                </View>
+                <View className="h-1.5 overflow-hidden rounded-full bg-surface-elevated dark:bg-surface-elevated-dark">
+                  <View
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${Math.round(item.progress * 100)}%` }}
+                  />
+                </View>
               </View>
-              <View className="h-1.5 overflow-hidden rounded-full bg-surface-elevated dark:bg-surface-elevated-dark">
-                <View
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${habit.progress * 100}%` }}
-                />
-              </View>
-            </View>
-          ))}
+            ))
+          )}
         </Card>
       </Animated.View>
 
@@ -177,13 +256,26 @@ export function HomeScreen({
             <Text className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               Deep work
             </Text>
-            <Text className="mt-2 text-xl font-bold text-ink dark:text-ink-dark">12h / 15h</Text>
+            <Text className="mt-2 text-xl font-bold text-ink dark:text-ink-dark">
+              {formatFocusDuration(weekFocusSeconds)} / 15h
+            </Text>
+            <View className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-elevated dark:bg-surface-elevated-dark">
+              <View
+                className="h-full rounded-full bg-primary"
+                style={{
+                  width: `${Math.min(
+                    100,
+                    Math.round((weekFocusSeconds / weekFocusGoalSeconds) * 100),
+                  )}%`,
+                }}
+              />
+            </View>
           </Card>
           <Card className="min-w-0 flex-1">
             <Text className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
               Focus streak
             </Text>
-            <Text className="mt-2 text-xl font-bold text-ink dark:text-ink-dark">8 days</Text>
+            <Text className="mt-2 text-xl font-bold text-ink dark:text-ink-dark">{streak} days</Text>
           </Card>
         </View>
       </Animated.View>
@@ -236,38 +328,49 @@ export function HomeScreen({
       <Animated.View entering={FadeInUp.delay(340).duration(450)} className="mt-2">
         <SectionHeader title="Recent activity" />
         <Card padded={false}>
-          {mockActivity.map((item, index) => (
-            <View
-              key={item.id}
-              className={`flex-row items-center px-4 py-3.5 ${
-                index < mockActivity.length - 1
-                  ? 'border-b border-border dark:border-border-dark'
-                  : ''
-              }`}
-            >
-              <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Ionicons
-                  name={
-                    item.type === 'completed'
-                      ? 'checkmark-circle'
-                      : item.type === 'created'
-                        ? 'add-circle'
-                        : 'notifications'
-                  }
-                  size={18}
-                  color={colors.primary}
-                />
-              </View>
-              <View className="min-w-0 flex-1">
-                <Text numberOfLines={1} className="text-sm font-semibold text-ink dark:text-ink-dark">
-                  {item.title}
-                </Text>
-                <Text className="text-xs text-ink-secondary dark:text-ink-dark-secondary">
-                  {item.subtitle} · {formatRelativeTime(item.timestamp)}
-                </Text>
-              </View>
+          {activity.length === 0 ? (
+            <View className="px-4 py-4">
+              <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
+                Task updates will appear here.
+              </Text>
             </View>
-          ))}
+          ) : (
+            activity.map((item, index) => (
+              <View
+                key={item.id}
+                className={`flex-row items-center px-4 py-3.5 ${
+                  index < activity.length - 1
+                    ? 'border-b border-border dark:border-border-dark'
+                    : ''
+                }`}
+              >
+                <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Ionicons
+                    name={
+                      item.type === 'completed'
+                        ? 'checkmark-circle'
+                        : item.type === 'created'
+                          ? 'add-circle'
+                          : 'notifications'
+                    }
+                    size={18}
+                    color={colors.primary}
+                  />
+                </View>
+                <View className="min-w-0 flex-1">
+                  <Text
+                    numberOfLines={1}
+                    className="text-sm font-semibold text-ink dark:text-ink-dark"
+                  >
+                    {item.title}
+                  </Text>
+                  <Text className="text-xs text-ink-secondary dark:text-ink-dark-secondary">
+                    {item.subtitle} · {formatRelativeTime(item.timestamp)}
+                  </Text>
+                </View>
+              </View>
+            ))
+          )}
         </Card>
       </Animated.View>
     </Screen>

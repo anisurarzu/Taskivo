@@ -2,6 +2,7 @@ export * from './types';
 export * from './validation/schemas';
 export { useAuthStore } from './store/auth-store';
 export { authService, MOCK_AUTH_OTP } from './services/auth-service';
+export { authRepository } from './services/auth-repository';
 export { authStorage } from './services/auth-storage';
 export { authApi } from './api/auth-api';
 export * from './hooks/useAuthMutations';

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { authService } from '../services/auth-service';
+import { authRepository } from '../services/auth-repository';
 import { authStorage } from '../services/auth-storage';
 import type {
   AuthFlowPurpose,
@@ -23,6 +23,7 @@ interface AuthState {
   flowOtp: string | null;
   flowPurpose: AuthFlowPurpose;
   flowStep: AuthFlowStep;
+  pendingPassword: string | null;
   hydrate: () => Promise<void>;
   completeOnboarding: () => void;
   login: (payload: LoginPayload) => Promise<void>;
@@ -48,6 +49,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   flowOtp: null,
   flowPurpose: null,
   flowStep: 'idle',
+  pendingPassword: null,
 
   hydrate: async () => {
     const onboarding = authStorage.getOnboardingCompleted();
@@ -69,7 +71,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   login: async (payload) => {
     set({ isLoading: true, error: null });
     try {
-      const session = await authService.login(payload);
+      const session = await authRepository.login(payload);
       await authStorage.saveSession(session);
       set({
         session,
@@ -78,6 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         isLoading: false,
         flowStep: 'authenticated',
         flowPurpose: null,
+        pendingPassword: null,
       });
     } catch (error) {
       set({
@@ -91,11 +94,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   register: async (payload) => {
     set({ isLoading: true, error: null });
     try {
-      const result = await authService.register(payload);
-      await authService.sendVerificationEmail(payload.email);
+      const result = await authRepository.register(payload);
+      await authRepository.sendVerificationEmail(payload.email);
       set({
         isLoading: false,
         flowEmail: payload.email,
+        pendingPassword: payload.password,
         flowPurpose: 'register',
         flowStep: 'awaiting_email_verification',
         user: result.user,
@@ -112,7 +116,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   requestPasswordReset: async (email) => {
     set({ isLoading: true, error: null });
     try {
-      await authService.forgotPassword({ email });
+      await authRepository.forgotPassword({ email });
       set({
         isLoading: false,
         flowEmail: email,
@@ -134,12 +138,38 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!email) throw new Error('Missing email for verification');
     set({ isLoading: true, error: null });
     try {
-      await authService.verifyOtp({ email, otp });
+      const result = await authRepository.verifyOtp({
+        email,
+        otp,
+        purpose: purpose ?? undefined,
+      });
 
       if (purpose === 'register') {
-        const session = await authService.login({
+        if (result.session) {
+          const verifiedUser = {
+            ...result.session.user,
+            name: get().user?.name ?? result.session.user.name,
+            emailVerified: true,
+          };
+          const nextSession: AuthSession = { ...result.session, user: verifiedUser };
+          await authStorage.saveSession(nextSession);
+          set({
+            session: nextSession,
+            user: verifiedUser,
+            isAuthenticated: true,
+            isLoading: false,
+            flowOtp: null,
+            pendingPassword: null,
+            flowPurpose: null,
+            flowStep: 'authenticated',
+          });
+          return 'authenticated';
+        }
+
+        const password = get().pendingPassword ?? 'Verified1';
+        const session = await authRepository.login({
           email,
-          password: 'Verified1',
+          password,
           rememberMe: true,
         });
         const verifiedUser = {
@@ -155,6 +185,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           isAuthenticated: true,
           isLoading: false,
           flowOtp: null,
+          pendingPassword: null,
           flowPurpose: null,
           flowStep: 'authenticated',
         });
@@ -182,7 +213,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (!email || !otp) throw new Error('Missing email or OTP for reset');
     set({ isLoading: true, error: null });
     try {
-      const session = await authService.resetPassword({
+      const session = await authRepository.resetPassword({
         email,
         otp,
         password,
@@ -222,7 +253,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     set({ isLoading: true, error: null });
     try {
-      await authService.logout();
+      await authRepository.logout();
       await authStorage.clearSession();
       set({
         user: null,
@@ -233,6 +264,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         flowEmail: null,
         flowOtp: null,
         flowPurpose: null,
+        pendingPassword: null,
       });
     } catch (error) {
       set({
