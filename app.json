@@ -17,7 +17,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.taskivo.app",
       "infoPlist": {
-        "UIBackgroundModes": ["remote-notification"]
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -51,7 +53,8 @@
           "icon": "./assets/icon.png",
           "color": "#16A34A"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true

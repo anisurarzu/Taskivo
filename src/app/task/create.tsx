@@ -1,13 +1,14 @@
 import { useRouter } from 'expo-router';
-import { CreateTaskScreen } from '@/screens';
+import { TaskFormScreen } from '@/features/tasks';
 
 export default function CreateTaskRoute() {
   const router = useRouter();
 
   return (
-    <CreateTaskScreen
+    <TaskFormScreen
+      mode="create"
       onBack={() => router.back()}
-      onSubmit={() => router.back()}
+      onSuccess={(taskId) => router.replace(`/task/${taskId}`)}
     />
   );
 }

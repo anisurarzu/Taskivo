@@ -20,6 +20,7 @@ export const ROUTES = {
   search: '/search',
   taskDetails: '/task/[id]',
   createTask: '/task/create',
+  editTask: '/task/[id]/edit',
 } as const;
 
 export const PRIORITY_LABELS = {

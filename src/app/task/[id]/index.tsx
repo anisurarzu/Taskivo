@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { TaskDetailsScreen } from '@/screens';
+import { TaskDetailsScreen } from '@/features/tasks';
 
 export default function TaskDetailsRoute() {
   const router = useRouter();
@@ -7,9 +7,10 @@ export default function TaskDetailsRoute() {
 
   return (
     <TaskDetailsScreen
-      taskId={id ?? '1'}
+      taskId={id ?? ''}
       onBack={() => router.back()}
-      onEdit={() => router.push('/task/create')}
+      onEdit={() => router.push(`/task/${id}/edit`)}
+      onDeleted={() => router.replace('/(tabs)')}
     />
   );
 }

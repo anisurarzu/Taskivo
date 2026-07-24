@@ -23,3 +23,5 @@ export {
   searchTasks,
   getTaskProgress,
 } from './utils/selectors';
+export { TaskFormScreen } from './screens/TaskFormScreen';
+export { TaskDetailsScreen } from './screens/TaskDetailsScreen';

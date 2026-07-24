@@ -40,6 +40,16 @@ export const createTaskSchema = z.object({
   reminderAt: z.string().datetime().nullable().optional(),
 });
 
+/** Form schema used by Create/Edit screens */
+export const taskFormSchema = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(120, 'Keep title under 120 characters'),
+  description: z.string().max(2000, 'Description is too long').optional().or(z.literal('')),
+  priority: z.enum(PRIORITIES),
+  category: z.enum(TASK_CATEGORIES),
+  tagsText: z.string().optional().or(z.literal('')),
+  dueAt: z.string().datetime().nullable().optional(),
+});
+
 export const updateTaskSchema = createTaskSchema.partial().extend({
   isCompleted: z.boolean().optional(),
   description: z.string().trim().max(2000).nullable().optional(),
@@ -50,3 +60,4 @@ export const updateTaskSchema = createTaskSchema.partial().extend({
 
 export type CreateTaskFormValues = z.infer<typeof createTaskSchema>;
 export type UpdateTaskFormValues = z.infer<typeof updateTaskSchema>;
+export type TaskFormValues = z.infer<typeof taskFormSchema>;
