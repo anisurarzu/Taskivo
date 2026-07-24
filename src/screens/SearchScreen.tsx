@@ -5,8 +5,13 @@ import { Screen } from '@/components/common';
 import { TaskCard } from '@/components/cards';
 import { SearchInput } from '@/components/inputs';
 import { IconButton } from '@/components/buttons';
-import { EmptyState } from '@/components/ui';
-import { mockTasks } from '@/data/mock';
+import { EmptyState, Loading } from '@/components/ui';
+import {
+  searchTasks,
+  useTasksQuery,
+  useToggleTaskMutation,
+  useTaskUiStore,
+} from '@/features/tasks';
 
 interface SearchScreenProps {
   onBack: () => void;
@@ -14,18 +19,13 @@ interface SearchScreenProps {
 }
 
 export function SearchScreen({ onBack, onTaskPress }: SearchScreenProps) {
-  const [query, setQuery] = useState('');
+  const searchQuery = useTaskUiStore((s) => s.searchQuery);
+  const setSearchQuery = useTaskUiStore((s) => s.setSearchQuery);
+  const [localQuery, setLocalQuery] = useState(searchQuery);
+  const { data: tasks = [], isLoading, isError, refetch } = useTasksQuery();
+  const toggleTask = useToggleTaskMutation();
 
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return mockTasks;
-    return mockTasks.filter(
-      (task) =>
-        task.title.toLowerCase().includes(q) ||
-        task.category.toLowerCase().includes(q) ||
-        task.description?.toLowerCase().includes(q),
-    );
-  }, [query]);
+  const results = useMemo(() => searchTasks(tasks, localQuery), [tasks, localQuery]);
 
   return (
     <Screen scroll>
@@ -35,23 +35,46 @@ export function SearchScreen({ onBack, onTaskPress }: SearchScreenProps) {
           <Text className="ml-1 text-2xl font-bold text-ink dark:text-ink-dark">Search</Text>
         </View>
 
-        <SearchInput value={query} onChangeText={setQuery} autoFocus />
+        <SearchInput
+          value={localQuery}
+          onChangeText={(value) => {
+            setLocalQuery(value);
+            setSearchQuery(value);
+          }}
+          autoFocus
+        />
 
         <Text className="mb-3 mt-6 text-sm font-medium text-ink-secondary dark:text-ink-dark-secondary">
-          {query ? `${results.length} results` : 'Suggested'}
+          {localQuery ? `${results.length} results` : 'All tasks'}
         </Text>
 
-        {results.length === 0 ? (
+        {isLoading ? <Loading label="Searching..." /> : null}
+        {isError ? (
+          <EmptyState
+            title="Search failed"
+            description="Something went wrong while loading tasks."
+            actionLabel="Retry"
+            onAction={() => void refetch()}
+            icon="alert-circle-outline"
+          />
+        ) : null}
+        {!isLoading && !isError && results.length === 0 ? (
           <EmptyState
             title="No matches"
             description="Try a different keyword or browse all tasks."
             icon="search-outline"
           />
-        ) : (
+        ) : null}
+        {!isLoading &&
+          !isError &&
           results.map((task) => (
-            <TaskCard key={task.id} task={task} onPress={() => onTaskPress(task.id)} />
-          ))
-        )}
+            <TaskCard
+              key={task.id}
+              task={task}
+              onPress={() => onTaskPress(task.id)}
+              onToggle={() => toggleTask.mutate(task.id)}
+            />
+          ))}
       </Animated.View>
     </Screen>
   );

@@ -4,10 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
 import { IconButton, PrimaryButton, SecondaryButton } from '@/components/buttons';
+import { Loading, EmptyState } from '@/components/ui';
 import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/constants';
 import { formatDate, formatTime } from '@/utils/format';
-import { mockTasks } from '@/data/mock';
 import { useThemeColors } from '@/hooks';
+import { useTaskQuery, useToggleTaskMutation } from '@/features/tasks';
 
 interface TaskDetailsScreenProps {
   taskId: string;
@@ -17,7 +18,31 @@ interface TaskDetailsScreenProps {
 
 export function TaskDetailsScreen({ taskId, onBack, onEdit }: TaskDetailsScreenProps) {
   const colors = useThemeColors();
-  const task = mockTasks.find((t) => t.id === taskId) ?? mockTasks[0];
+  const { data: task, isLoading, isError, refetch } = useTaskQuery(taskId);
+  const toggleTask = useToggleTaskMutation();
+
+  if (isLoading) {
+    return (
+      <Screen>
+        <Loading fullScreen label="Loading task..." />
+      </Screen>
+    );
+  }
+
+  if (isError || !task) {
+    return (
+      <Screen>
+        <EmptyState
+          title="Task not found"
+          description="This task may have been deleted."
+          actionLabel="Go back"
+          onAction={onBack}
+          icon="alert-circle-outline"
+        />
+        <PrimaryButton label="Retry" onPress={() => void refetch()} className="mx-5" />
+      </Screen>
+    );
+  }
 
   return (
     <Screen scroll>
@@ -75,7 +100,7 @@ export function TaskDetailsScreen({ taskId, onBack, onEdit }: TaskDetailsScreenP
             <View
               key={row.label}
               className={`flex-row items-center py-3 ${
-                index < arr.length - 1 ? 'border-b border-border/60 dark:border-border-dark' : ''
+                index < arr.length - 1 ? 'border-b border-border dark:border-border-dark' : ''
               }`}
             >
               <Ionicons name={row.icon} size={18} color={colors.textSecondary} />
@@ -87,8 +112,27 @@ export function TaskDetailsScreen({ taskId, onBack, onEdit }: TaskDetailsScreenP
           ))}
         </Card>
 
+        {task.tags.length > 0 ? (
+          <View className="mb-6 flex-row flex-wrap gap-2">
+            {task.tags.map((tag) => (
+              <View
+                key={tag}
+                className="rounded-full bg-surface-elevated px-2.5 py-1 dark:bg-surface-elevated-dark"
+              >
+                <Text className="text-xs font-medium text-ink-secondary dark:text-ink-dark-secondary">
+                  #{tag}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
         <View className="gap-3">
-          <PrimaryButton label="Mark complete" onPress={() => undefined} />
+          <PrimaryButton
+            label={task.isCompleted ? 'Mark incomplete' : 'Mark complete'}
+            loading={toggleTask.isPending}
+            onPress={() => toggleTask.mutate(task.id)}
+          />
           <SecondaryButton label="Edit task" onPress={onEdit} />
         </View>
       </Animated.View>

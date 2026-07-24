@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,18 @@ import { IconButton } from '@/components/buttons';
 import { Screen } from '@/components/common';
 import { TaskCard, Card, StatGrid } from '@/components/cards';
 import { SearchInput } from '@/components/inputs';
-import { Avatar, SectionHeader } from '@/components/ui';
-import { mockActivity, mockStats, mockTasks, mockUser } from '@/data/mock';
+import { Avatar, SectionHeader, Loading, EmptyState } from '@/components/ui';
+import { mockActivity, mockStats, mockUser } from '@/data/mock';
 import { formatDate, formatRelativeTime, getGreeting } from '@/utils/format';
-import type { Task } from '@/types';
 import { colors } from '@/theme/colors';
+import {
+  getActiveTasks,
+  getTaskProgress,
+  getTodayTasks,
+  getUpcomingTasks,
+  useTasksQuery,
+  useToggleTaskMutation,
+} from '@/features/tasks';
 
 interface HomeScreenProps {
   onSearch: () => void;
@@ -37,35 +44,20 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const { width } = useWindowDimensions();
   const isCompact = width < 380;
-  const [tasks, setTasks] = useState(mockTasks);
+  const { data: tasks = [], isLoading, isError, refetch } = useTasksQuery();
+  const toggleTask = useToggleTaskMutation();
 
-  const todayTasks = useMemo(() => tasks.filter((t) => !t.isCompleted).slice(0, 3), [tasks]);
-  const upcoming = useMemo(() => tasks.filter((t) => !t.isCompleted).slice(3), [tasks]);
+  const todayTasks = useMemo(() => {
+    const dueToday = getTodayTasks(tasks);
+    if (dueToday.length > 0) return dueToday.slice(0, 4);
+    return getActiveTasks(tasks).slice(0, 4);
+  }, [tasks]);
+
+  const upcoming = useMemo(() => getUpcomingTasks(tasks).slice(0, 4), [tasks]);
   const completedCount = tasks.filter((t) => t.isCompleted).length;
-  const progress = Math.round((completedCount / Math.max(tasks.length, 1)) * 100);
+  const progress = getTaskProgress(tasks);
 
-  const dashboardStats = useMemo(
-    () =>
-      mockStats.map((s) => ({
-        ...s,
-        color: s.color === '#4F46E5' ? colors.primary : s.color === '#7C3AED' ? colors.secondary : s.color === '#06B6D4' ? colors.accent : s.color,
-      })),
-    [],
-  );
-
-  const toggleTask = (id: string) => {
-    setTasks((prev) =>
-      prev.map((task) =>
-        task.id === id
-          ? {
-              ...task,
-              isCompleted: !task.isCompleted,
-              status: (!task.isCompleted ? 'completed' : 'todo') as Task['status'],
-            }
-          : task,
-      ),
-    );
-  };
+  const dashboardStats = useMemo(() => mockStats, []);
 
   return (
     <Screen scroll tabBar>
@@ -77,10 +69,7 @@ export function HomeScreen({
               <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
                 {getGreeting()}
               </Text>
-              <Text
-                numberOfLines={1}
-                className="text-xl font-bold text-ink dark:text-ink-dark"
-              >
+              <Text numberOfLines={1} className="text-xl font-bold text-ink dark:text-ink-dark">
                 {mockUser.name.split(' ')[0]}
               </Text>
             </View>
@@ -133,10 +122,10 @@ export function HomeScreen({
             <Pressable
               key={action.label}
               onPress={action.onPress}
-              className="min-w-0 flex-1 items-center rounded-card border border-border bg-card py-4 dark:border-border-dark dark:bg-card-dark"
+              className="min-w-0 flex-1 items-center rounded-lg border border-border bg-card py-3.5 dark:border-border-dark dark:bg-card-dark"
             >
-              <View className="mb-2 h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Ionicons name={action.icon} size={20} color={colors.primary} />
+              <View className="mb-2 h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                <Ionicons name={action.icon} size={18} color={colors.primary} />
               </View>
               <Text
                 numberOfLines={1}
@@ -200,13 +189,32 @@ export function HomeScreen({
       </Animated.View>
 
       <Animated.View entering={FadeInUp.delay(260).duration(450)} className="mt-6">
-        <SectionHeader title="Today’s tasks" actionLabel="View all" onAction={() => undefined} />
+        <SectionHeader title="Today’s tasks" actionLabel="View all" onAction={onSearch} />
+        {isLoading ? <Loading label="Loading tasks..." /> : null}
+        {isError ? (
+          <EmptyState
+            title="Couldn’t load tasks"
+            description="Pull to retry or tap below."
+            actionLabel="Try again"
+            onAction={() => void refetch()}
+            icon="alert-circle-outline"
+          />
+        ) : null}
+        {!isLoading && !isError && todayTasks.length === 0 ? (
+          <EmptyState
+            title="No tasks for today"
+            description="Create a task to get started."
+            actionLabel="New task"
+            onAction={onCreateTask}
+            icon="checkbox-outline"
+          />
+        ) : null}
         {todayTasks.map((task) => (
           <TaskCard
             key={task.id}
             task={task}
             onPress={() => onTaskPress(task.id)}
-            onToggle={() => toggleTask(task.id)}
+            onToggle={() => toggleTask.mutate(task.id)}
           />
         ))}
       </Animated.View>
@@ -219,7 +227,7 @@ export function HomeScreen({
               key={task.id}
               task={task}
               onPress={() => onTaskPress(task.id)}
-              onToggle={() => toggleTask(task.id)}
+              onToggle={() => toggleTask.mutate(task.id)}
             />
           ))}
         </Animated.View>

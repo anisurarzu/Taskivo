@@ -4,13 +4,17 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
-import { SectionHeader } from '@/components/ui';
-import { mockTasks } from '@/data/mock';
+import { SectionHeader, Loading } from '@/components/ui';
 import { cn } from '@/utils/cn';
 import { formatTime } from '@/utils/format';
 import { colors } from '@/theme/colors';
 import { CATEGORY_LABELS } from '@/constants';
 import { useThemeColors } from '@/hooks';
+import {
+  getEventDaysInMonth,
+  getTasksForDate,
+  useTasksQuery,
+} from '@/features/tasks';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
@@ -43,6 +47,7 @@ export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
   const today = useMemo(() => new Date(), []);
   const [cursor, setCursor] = useState(() => startOfMonth(today));
   const [selected, setSelected] = useState(today);
+  const { data: tasks = [], isLoading } = useTasksQuery();
 
   const monthLabel = cursor.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
@@ -58,25 +63,11 @@ export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
     return grid;
   }, [cursor]);
 
-  const eventDays = useMemo(() => {
-    const set = new Set<number>();
-    mockTasks.forEach((task) => {
-      if (!task.dueAt) return;
-      const d = new Date(task.dueAt);
-      if (d.getMonth() === cursor.getMonth() && d.getFullYear() === cursor.getFullYear()) {
-        set.add(d.getDate());
-      }
-    });
-    return set;
-  }, [cursor]);
+  const eventDays = useMemo(() => getEventDaysInMonth(tasks, cursor), [tasks, cursor]);
 
   const agenda = useMemo(
-    () =>
-      mockTasks.filter((task) => {
-        if (!task.dueAt || task.isCompleted) return false;
-        return sameDay(new Date(task.dueAt), selected);
-      }),
-    [selected],
+    () => getTasksForDate(tasks, selected).filter((task) => !task.isCompleted),
+    [tasks, selected],
   );
 
   const shiftMonth = (delta: number) => {
@@ -197,7 +188,9 @@ export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
           })}
         />
 
-        {agenda.length === 0 ? (
+        {isLoading ? (
+          <Loading label="Loading agenda..." />
+        ) : agenda.length === 0 ? (
           <Card className="items-center py-6">
             <Ionicons name="calendar-outline" size={22} color={colors.textMuted} />
             <Text className="mt-2 text-sm font-medium text-ink dark:text-ink-dark">

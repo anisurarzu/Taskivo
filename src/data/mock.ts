@@ -1,4 +1,5 @@
-import type { ActivityItem, OnboardingSlide, StatItem, Task, UserProfile } from '@/types';
+import type { ActivityItem, OnboardingSlide, StatItem, UserProfile } from '@/types';
+import { seedTasks } from '@/features/tasks';
 
 export const mockUser: UserProfile = {
   id: '1',
@@ -7,67 +8,46 @@ export const mockUser: UserProfile = {
   plan: 'pro',
 };
 
-export const mockTasks: Task[] = [
+/** @deprecated Prefer `useTasksQuery` from `@/features/tasks` */
+export const mockTasks = seedTasks;
+
+export const mockStats: StatItem[] = [
   {
     id: '1',
-    title: 'Finalize product roadmap',
-    description: 'Align Q3 priorities with design and engineering.',
-    priority: 'high',
-    status: 'in_progress',
-    category: 'work',
-    dueAt: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date().toISOString(),
-    isCompleted: false,
+    label: 'Completed',
+    value: 12,
+    change: '+18%',
+    trend: 'up',
+    color: '#22C55E',
+    icon: 'checkmark-circle-outline',
   },
   {
     id: '2',
-    title: 'Morning workout',
-    description: '45 min strength session',
-    priority: 'medium',
-    status: 'todo',
-    category: 'health',
-    dueAt: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date().toISOString(),
-    isCompleted: false,
+    label: 'In Progress',
+    value: 5,
+    change: '+2',
+    trend: 'up',
+    color: '#16A34A',
+    icon: 'play-circle-outline',
   },
   {
     id: '3',
-    title: 'Review analytics dashboard',
-    priority: 'urgent',
-    status: 'todo',
-    category: 'work',
-    dueAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date().toISOString(),
-    isCompleted: false,
+    label: 'Focus Time',
+    value: '3.2h',
+    change: '+0.5h',
+    trend: 'up',
+    color: '#10B981',
+    icon: 'timer-outline',
   },
   {
     id: '4',
-    title: 'Read design systems chapter',
-    priority: 'low',
-    status: 'todo',
-    category: 'learning',
-    dueAt: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString(),
-    createdAt: new Date().toISOString(),
-    isCompleted: false,
+    label: 'Streak',
+    value: '8 days',
+    change: 'Best',
+    trend: 'neutral',
+    color: '#84CC16',
+    icon: 'flame-outline',
   },
-  {
-    id: '5',
-    title: 'Budget review',
-    priority: 'medium',
-    status: 'completed',
-    category: 'finance',
-    dueAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    completedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    isCompleted: true,
-  },
-];
-
-export const mockStats: StatItem[] = [
-  { id: '1', label: 'Completed', value: 12, change: '+18%', trend: 'up', color: '#22C55E', icon: 'checkmark-circle-outline' },
-  { id: '2', label: 'In Progress', value: 5, change: '+2', trend: 'up', color: '#16A34A', icon: 'play-circle-outline' },
-  { id: '3', label: 'Focus Time', value: '3.2h', change: '+0.5h', trend: 'up', color: '#10B981', icon: 'timer-outline' },
-  { id: '4', label: 'Streak', value: '8 days', change: 'Best', trend: 'neutral', color: '#84CC16', icon: 'flame-outline' },
 ];
 
 export const mockActivity: ActivityItem[] = [
