@@ -6,8 +6,8 @@ import { secureStorage } from '@/utils/secure-storage';
  */
 export const apiClient = axios.create({
   baseURL: process.env.EXPO_PUBLIC_API_URL ?? 'https://taskivo.onrender.com',
-  // Render free tier can cold-start for 30–50s
-  timeout: 60000,
+  // Render free tier cold start can exceed a minute on mobile networks
+  timeout: 90000,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',

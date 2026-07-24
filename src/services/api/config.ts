@@ -1,11 +1,11 @@
 /**
  * API runtime config.
- * Keep mock on by default until a real backend is available.
  *
- * EXPO_PUBLIC_USE_MOCK_API=false → hit EXPO_PUBLIC_API_URL
+ * Live Render API is the default.
+ * Set EXPO_PUBLIC_USE_MOCK_API=true only for offline mock mode.
  */
 export function isMockApi() {
-  return process.env.EXPO_PUBLIC_USE_MOCK_API !== 'false';
+  return process.env.EXPO_PUBLIC_USE_MOCK_API === 'true';
 }
 
 export const API_CONFIG = {

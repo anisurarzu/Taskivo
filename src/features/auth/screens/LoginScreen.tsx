@@ -27,7 +27,11 @@ export function AuthLoginScreen({ onSuccess, onRegister, onForgotPassword }: Log
 
   const { control, handleSubmit, setValue, watch } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', rememberMe: true },
+    defaultValues: {
+      email: 'demo@taskivo.app',
+      password: 'Taskivo123',
+      rememberMe: true,
+    },
   });
 
   const rememberMe = watch('rememberMe');
@@ -35,6 +39,11 @@ export function AuthLoginScreen({ onSuccess, onRegister, onForgotPassword }: Log
   const onSubmit = handleSubmit(async (values) => {
     clearError();
     try {
+      // Wake Render free tier before auth (avoids first-request timeout).
+      const { apiClient, isMockApi } = await import('@/services/api');
+      if (!isMockApi()) {
+        await apiClient.get('/health').catch(() => undefined);
+      }
       await loginMutation.mutateAsync(values);
       onSuccess();
     } catch {

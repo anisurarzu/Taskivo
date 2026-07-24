@@ -4,6 +4,7 @@ import { authRouter } from './routes/auth.js';
 import { tasksRouter } from './routes/tasks.js';
 import { focusRouter } from './routes/focus.js';
 import './lib/db.js';
+import { seedDemoUser } from './lib/seed.js';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
@@ -36,7 +37,13 @@ app.use((err: unknown, _req: express.Request, res: express.Response, _next: expr
   res.status(500).json({ message: 'Internal server error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Taskivo API running on http://localhost:${PORT}`);
-  console.log(`Demo OTP: ${process.env.DEMO_OTP ?? '123456'}`);
-});
+async function boot() {
+  await seedDemoUser();
+  app.listen(PORT, () => {
+    console.log(`Taskivo API running on http://localhost:${PORT}`);
+    console.log(`Demo OTP: ${process.env.DEMO_OTP ?? '123456'}`);
+    console.log('Demo login: demo@taskivo.app / Taskivo123');
+  });
+}
+
+void boot();
