@@ -1,22 +1,23 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../lib/db.js';
+import { execute, queryAll, queryOne } from '../lib/db.js';
 import { createId, mapFocus } from '../lib/auth.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 
 export const focusRouter = Router();
 focusRouter.use(requireAuth);
 
-focusRouter.get('/sessions', (req: AuthedRequest, res) => {
-  const rows = db
-    .prepare(
-      `SELECT * FROM focus_sessions WHERE user_id = ? ORDER BY started_at DESC`,
-    )
-    .all(req.userId!) as Array<Parameters<typeof mapFocus>[0]>;
+type FocusRow = Parameters<typeof mapFocus>[0];
+
+focusRouter.get('/sessions', async (req: AuthedRequest, res) => {
+  const rows = await queryAll<FocusRow>(
+    `SELECT * FROM focus_sessions WHERE user_id = ? ORDER BY started_at DESC`,
+    [req.userId!],
+  );
   return res.json(rows.map(mapFocus));
 });
 
-focusRouter.post('/sessions', (req: AuthedRequest, res) => {
+focusRouter.post('/sessions', async (req: AuthedRequest, res) => {
   const schema = z.object({
     taskId: z.string().optional(),
     taskTitle: z.string().optional(),
@@ -30,30 +31,29 @@ focusRouter.post('/sessions', (req: AuthedRequest, res) => {
 
   const id = createId('focus');
   const endedAt = new Date().toISOString();
-  db.prepare(
+  await execute(
     `INSERT INTO focus_sessions (
       id, user_id, task_id, task_title, duration_seconds, completed_seconds,
       started_at, ended_at, status
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  ).run(
-    id,
-    req.userId!,
-    parsed.data.taskId ?? null,
-    parsed.data.taskTitle ?? null,
-    parsed.data.durationSeconds,
-    parsed.data.completedSeconds,
-    parsed.data.startedAt,
-    endedAt,
-    parsed.data.status,
+    [
+      id,
+      req.userId!,
+      parsed.data.taskId ?? null,
+      parsed.data.taskTitle ?? null,
+      parsed.data.durationSeconds,
+      parsed.data.completedSeconds,
+      parsed.data.startedAt,
+      endedAt,
+      parsed.data.status,
+    ],
   );
 
-  const row = db.prepare(`SELECT * FROM focus_sessions WHERE id = ?`).get(id) as Parameters<
-    typeof mapFocus
-  >[0];
-  return res.status(201).json(mapFocus(row));
+  const row = await queryOne<FocusRow>(`SELECT * FROM focus_sessions WHERE id = ?`, [id]);
+  return res.status(201).json(mapFocus(row!));
 });
 
-focusRouter.delete('/sessions', (req: AuthedRequest, res) => {
-  db.prepare(`DELETE FROM focus_sessions WHERE user_id = ?`).run(req.userId!);
+focusRouter.delete('/sessions', async (req: AuthedRequest, res) => {
+  await execute(`DELETE FROM focus_sessions WHERE user_id = ?`, [req.userId!]);
   return res.status(204).send();
 });

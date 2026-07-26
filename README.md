@@ -39,8 +39,13 @@ cd server && npm run dev
 
 ## Next: durable database
 
-Current API uses **SQLite on the Render disk**, which can reset on redeploy/sleep.
-Production next step: **Render Postgres** (or similar) so users/tasks persist reliably.
+API supports **Postgres** via `DATABASE_URL` (Render) and falls back to SQLite locally.
+
+1. Create Render PostgreSQL (`taskivo-db`)
+2. Set `DATABASE_URL` on the web service (Internal Database URL)
+3. Redeploy → `/health` should show `"database":"postgres"`
+
+Details: `server/README.md`
 
 ## Tech stack
 

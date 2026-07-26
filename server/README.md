@@ -1,8 +1,8 @@
 # Taskivo API
 
-JWT + SQLite backend for the Expo app.
+JWT API with **Postgres (production)** or **SQLite (local fallback)**.
 
-## Run
+## Run locally (SQLite — no Postgres needed)
 
 ```bash
 cd server
@@ -10,20 +10,37 @@ npm install
 npm run dev
 ```
 
-API: `http://localhost:4000`  
-Health: `GET /health`  
-Demo OTP: `123456`
+API: `http://localhost:4000`
 
-## App wiring
+## Run with Postgres
 
-In project root `.env`:
-
-```
-EXPO_PUBLIC_API_URL=http://localhost:4000
-EXPO_PUBLIC_USE_MOCK_API=false
+```bash
+export DATABASE_URL=postgres://USER:PASS@HOST:5432/taskivo
+npm run dev
 ```
 
-For a physical phone, use your computer LAN IP instead of `localhost`.
+When `DATABASE_URL` is set, the API uses Postgres automatically.
+
+## Render setup (step by step)
+
+1. Render Dashboard → **New** → **PostgreSQL** (Free)
+   - Name: `taskivo-db`
+2. Open your **taskivo** Web Service → **Environment**
+3. Add:
+   - `DATABASE_URL` = Internal Database URL from the Postgres service  
+     (or link DB in Render UI so it injects automatically)
+4. Keep existing:
+   - `JWT_SECRET=...`
+   - `DEMO_OTP=123456`
+5. **Manual Deploy** latest commit
+
+After deploy, check:
+- https://taskivo.onrender.com/health  
+  → should include `"database":"postgres"`
+
+Demo login (auto-seeded):
+- Email: `demo@taskivo.app`
+- Password: `Taskivo123`
 
 ## Endpoints
 

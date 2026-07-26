@@ -40,7 +40,7 @@ export function publicUser(row: {
   id: string;
   name: string;
   email: string;
-  email_verified: number;
+  email_verified: number | boolean;
   avatar_url: string | null;
 }) {
   return {
@@ -66,8 +66,15 @@ export function mapTask(row: {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
-  is_completed: number;
+  is_completed: number | boolean;
 }) {
+  const tags =
+    typeof row.tags_json === 'string' ? (JSON.parse(row.tags_json) as string[]) : (row.tags_json as string[]);
+  const subtasks =
+    typeof row.subtasks_json === 'string'
+      ? (JSON.parse(row.subtasks_json) as Array<{ id: string; title: string; isCompleted: boolean }>)
+      : (row.subtasks_json as Array<{ id: string; title: string; isCompleted: boolean }>);
+
   return {
     id: row.id,
     title: row.title,
@@ -75,12 +82,8 @@ export function mapTask(row: {
     priority: row.priority,
     status: row.status,
     category: row.category,
-    tags: JSON.parse(row.tags_json) as string[],
-    subtasks: JSON.parse(row.subtasks_json) as Array<{
-      id: string;
-      title: string;
-      isCompleted: boolean;
-    }>,
+    tags,
+    subtasks,
     dueAt: row.due_at ?? undefined,
     reminderAt: row.reminder_at ?? undefined,
     completedAt: row.completed_at ?? undefined,

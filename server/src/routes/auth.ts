@@ -1,36 +1,51 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
-import { db } from '../lib/db.js';
+import { execute, queryOne } from '../lib/db.js';
 import { createId, publicUser, signTokens } from '../lib/auth.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 
 const DEMO_OTP = process.env.DEMO_OTP ?? '123456';
 
+type UserRow = {
+  id: string;
+  name: string;
+  email: string;
+  password_hash: string;
+  email_verified: number | boolean;
+  avatar_url: string | null;
+};
+
 export const authRouter = Router();
 
-function saveOtp(email: string, purpose: string) {
+async function saveOtp(email: string, purpose: string) {
   const expiresAt = Date.now() + 1000 * 60 * 15;
-  db.prepare(
+  await execute(
     `INSERT INTO otps (email, purpose, code, expires_at)
      VALUES (?, ?, ?, ?)
      ON CONFLICT(email, purpose) DO UPDATE SET code = excluded.code, expires_at = excluded.expires_at`,
-  ).run(email.toLowerCase(), purpose, DEMO_OTP, expiresAt);
+    [email.toLowerCase(), purpose, DEMO_OTP, expiresAt],
+  );
   return DEMO_OTP;
 }
 
-function readOtp(email: string, purpose: string, code: string) {
-  const row = db
-    .prepare(`SELECT code, expires_at FROM otps WHERE email = ? AND purpose = ?`)
-    .get(email.toLowerCase(), purpose) as { code: string; expires_at: number } | undefined;
-  if (!row || row.code !== code || row.expires_at < Date.now()) {
+async function readOtp(email: string, purpose: string, code: string) {
+  const row = await queryOne<{ code: string; expires_at: number | string }>(
+    `SELECT code, expires_at FROM otps WHERE email = ? AND purpose = ?`,
+    [email.toLowerCase(), purpose],
+  );
+  const expiresAt = Number(row?.expires_at ?? 0);
+  if (!row || row.code !== code || expiresAt < Date.now()) {
     throw new Error('Invalid or expired code');
   }
 }
 
-function consumeOtp(email: string, purpose: string, code: string) {
-  readOtp(email, purpose, code);
-  db.prepare(`DELETE FROM otps WHERE email = ? AND purpose = ?`).run(email.toLowerCase(), purpose);
+async function consumeOtp(email: string, purpose: string, code: string) {
+  await readOtp(email, purpose, code);
+  await execute(`DELETE FROM otps WHERE email = ? AND purpose = ?`, [
+    email.toLowerCase(),
+    purpose,
+  ]);
 }
 
 authRouter.post('/register', async (req, res) => {
@@ -49,9 +64,7 @@ authRouter.post('/register', async (req, res) => {
     return res.status(400).json({ message: 'Passwords do not match' });
   }
 
-  const existing = db
-    .prepare(`SELECT id FROM users WHERE email = ?`)
-    .get(email.toLowerCase());
+  const existing = await queryOne(`SELECT id FROM users WHERE email = ?`, [email.toLowerCase()]);
   if (existing) {
     return res.status(409).json({ message: 'Email already registered' });
   }
@@ -59,12 +72,13 @@ authRouter.post('/register', async (req, res) => {
   const now = new Date().toISOString();
   const id = createId('user');
   const passwordHash = await bcrypt.hash(password, 10);
-  db.prepare(
+  await execute(
     `INSERT INTO users (id, name, email, password_hash, email_verified, created_at, updated_at)
      VALUES (?, ?, ?, ?, 0, ?, ?)`,
-  ).run(id, name, email.toLowerCase(), passwordHash, now, now);
+    [id, name, email.toLowerCase(), passwordHash, now, now],
+  );
 
-  saveOtp(email, 'register');
+  await saveOtp(email, 'register');
 
   return res.status(201).json({
     user: {
@@ -89,18 +103,9 @@ authRouter.post('/login', async (req, res) => {
     return res.status(400).json({ message: 'Invalid credentials' });
   }
 
-  const row = db
-    .prepare(`SELECT * FROM users WHERE email = ?`)
-    .get(parsed.data.email.toLowerCase()) as
-    | {
-        id: string;
-        name: string;
-        email: string;
-        password_hash: string;
-        email_verified: number;
-        avatar_url: string | null;
-      }
-    | undefined;
+  const row = await queryOne<UserRow>(`SELECT * FROM users WHERE email = ?`, [
+    parsed.data.email.toLowerCase(),
+  ]);
 
   if (!row) {
     return res.status(401).json({ message: 'Invalid email or password' });
@@ -112,7 +117,7 @@ authRouter.post('/login', async (req, res) => {
   }
 
   if (!row.email_verified) {
-    saveOtp(row.email, 'register');
+    await saveOtp(row.email, 'register');
     return res.status(403).json({
       message: 'Email not verified',
       requiresVerification: true,
@@ -128,11 +133,11 @@ authRouter.post('/login', async (req, res) => {
   });
 });
 
-authRouter.post('/forgot-password', (req, res) => {
+authRouter.post('/forgot-password', async (req, res) => {
   const email = String(req.body?.email ?? '').toLowerCase();
   if (!email) return res.status(400).json({ message: 'Email is required' });
-  const user = db.prepare(`SELECT id FROM users WHERE email = ?`).get(email);
-  if (user) saveOtp(email, 'reset');
+  const user = await queryOne(`SELECT id FROM users WHERE email = ?`, [email]);
+  if (user) await saveOtp(email, 'reset');
   return res.json({
     success: true,
     email,
@@ -153,19 +158,17 @@ authRouter.post('/verify-otp', async (req, res) => {
   }
 
   const email = parsed.data.email.toLowerCase();
-  const purpose =
-    parsed.data.purpose ??
-    (db.prepare(`SELECT purpose FROM otps WHERE email = ? ORDER BY expires_at DESC`).get(email) as
-      | { purpose: string }
-      | undefined)?.purpose ??
-    'register';
+  const purposeRow = await queryOne<{ purpose: string }>(
+    `SELECT purpose FROM otps WHERE email = ? ORDER BY expires_at DESC`,
+    [email],
+  );
+  const purpose = parsed.data.purpose ?? purposeRow?.purpose ?? 'register';
 
   try {
     if (purpose === 'register') {
-      consumeOtp(email, purpose, parsed.data.otp);
+      await consumeOtp(email, purpose, parsed.data.otp);
     } else {
-      // Keep OTP until password reset completes.
-      readOtp(email, purpose, parsed.data.otp);
+      await readOtp(email, purpose, parsed.data.otp);
     }
   } catch (error) {
     return res.status(400).json({
@@ -175,17 +178,12 @@ authRouter.post('/verify-otp', async (req, res) => {
 
   if (purpose === 'register') {
     const now = new Date().toISOString();
-    db.prepare(`UPDATE users SET email_verified = 1, updated_at = ? WHERE email = ?`).run(
+    await execute(`UPDATE users SET email_verified = 1, updated_at = ? WHERE email = ?`, [
       now,
       email,
-    );
-    const row = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as {
-      id: string;
-      name: string;
-      email: string;
-      email_verified: number;
-      avatar_url: string | null;
-    };
+    ]);
+    const row = await queryOne<UserRow>(`SELECT * FROM users WHERE email = ?`, [email]);
+    if (!row) return res.status(404).json({ message: 'User not found' });
     const tokens = signTokens(row);
     return res.json({
       success: true,
@@ -214,29 +212,22 @@ authRouter.post('/reset-password', async (req, res) => {
 
   const email = parsed.data.email.toLowerCase();
   try {
-    consumeOtp(email, 'reset', parsed.data.otp);
+    await consumeOtp(email, 'reset', parsed.data.otp);
   } catch (error) {
     return res.status(400).json({
       message: error instanceof Error ? error.message : 'Invalid or expired code',
     });
   }
 
-  const row = db.prepare(`SELECT * FROM users WHERE email = ?`).get(email) as
-    | {
-        id: string;
-        name: string;
-        email: string;
-        email_verified: number;
-        avatar_url: string | null;
-      }
-    | undefined;
+  const row = await queryOne<UserRow>(`SELECT * FROM users WHERE email = ?`, [email]);
   if (!row) return res.status(404).json({ message: 'User not found' });
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
   const now = new Date().toISOString();
-  db.prepare(
+  await execute(
     `UPDATE users SET password_hash = ?, email_verified = 1, updated_at = ? WHERE email = ?`,
-  ).run(passwordHash, now, email);
+    [passwordHash, now, email],
+  );
 
   const tokens = signTokens(row);
   return res.json({
@@ -246,16 +237,8 @@ authRouter.post('/reset-password', async (req, res) => {
   });
 });
 
-authRouter.get('/me', requireAuth, (req: AuthedRequest, res) => {
-  const row = db.prepare(`SELECT * FROM users WHERE id = ?`).get(req.userId!) as
-    | {
-        id: string;
-        name: string;
-        email: string;
-        email_verified: number;
-        avatar_url: string | null;
-      }
-    | undefined;
+authRouter.get('/me', requireAuth, async (req: AuthedRequest, res) => {
+  const row = await queryOne<UserRow>(`SELECT * FROM users WHERE id = ?`, [req.userId!]);
   if (!row) return res.status(404).json({ message: 'User not found' });
   return res.json(publicUser(row));
 });

@@ -1,11 +1,13 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../lib/db.js';
+import { execute, queryAll, queryOne } from '../lib/db.js';
 import { createId, mapTask } from '../lib/auth.js';
 import { requireAuth, type AuthedRequest } from '../middleware/auth.js';
 
 export const tasksRouter = Router();
 tasksRouter.use(requireAuth);
+
+type TaskRow = Parameters<typeof mapTask>[0] & { user_id: string; description: string | null };
 
 const createSchema = z.object({
   title: z.string().trim().min(1).max(120),
@@ -28,10 +30,11 @@ const createSchema = z.object({
   reminderAt: z.string().nullable().optional(),
 });
 
-tasksRouter.get('/', (req: AuthedRequest, res) => {
-  const rows = db
-    .prepare(`SELECT * FROM tasks WHERE user_id = ? ORDER BY updated_at DESC`)
-    .all(req.userId!) as Array<Parameters<typeof mapTask>[0] & { user_id: string }>;
+tasksRouter.get('/', async (req: AuthedRequest, res) => {
+  const rows = await queryAll<TaskRow>(
+    `SELECT * FROM tasks WHERE user_id = ? ORDER BY updated_at DESC`,
+    [req.userId!],
+  );
 
   let tasks = rows.map(mapTask);
   const { status, category, priority, query, dueOn } = req.query;
@@ -58,15 +61,16 @@ tasksRouter.get('/', (req: AuthedRequest, res) => {
   return res.json(tasks);
 });
 
-tasksRouter.get('/:id', (req: AuthedRequest, res) => {
-  const row = db
-    .prepare(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`)
-    .get(req.params.id, req.userId!) as Parameters<typeof mapTask>[0] | undefined;
+tasksRouter.get('/:id', async (req: AuthedRequest, res) => {
+  const row = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`, [
+    req.params.id,
+    req.userId!,
+  ]);
   if (!row) return res.status(404).json({ message: 'Task not found' });
   return res.json(mapTask(row));
 });
 
-tasksRouter.post('/', (req: AuthedRequest, res) => {
+tasksRouter.post('/', async (req: AuthedRequest, res) => {
   const parsed = createSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Invalid task payload' });
 
@@ -79,39 +83,37 @@ tasksRouter.post('/', (req: AuthedRequest, res) => {
     isCompleted: Boolean(item.isCompleted),
   }));
 
-  db.prepare(
+  await execute(
     `INSERT INTO tasks (
       id, user_id, title, description, priority, status, category,
       tags_json, subtasks_json, due_at, reminder_at, created_at, updated_at, is_completed
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
-  ).run(
-    id,
-    req.userId!,
-    input.title.trim(),
-    input.description?.trim() || null,
-    input.priority ?? 'medium',
-    input.status ?? 'todo',
-    input.category ?? 'work',
-    JSON.stringify(input.tags ?? []),
-    JSON.stringify(subtasks),
-    input.dueAt ?? null,
-    input.reminderAt ?? null,
-    now,
-    now,
+    [
+      id,
+      req.userId!,
+      input.title.trim(),
+      input.description?.trim() || null,
+      input.priority ?? 'medium',
+      input.status ?? 'todo',
+      input.category ?? 'work',
+      JSON.stringify(input.tags ?? []),
+      JSON.stringify(subtasks),
+      input.dueAt ?? null,
+      input.reminderAt ?? null,
+      now,
+      now,
+    ],
   );
 
-  const row = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(id) as Parameters<
-    typeof mapTask
-  >[0];
-  return res.status(201).json(mapTask(row));
+  const row = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [id]);
+  return res.status(201).json(mapTask(row!));
 });
 
-tasksRouter.patch('/:id', (req: AuthedRequest, res) => {
-  const existing = db
-    .prepare(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`)
-    .get(req.params.id, req.userId!) as
-    | (Parameters<typeof mapTask>[0] & { user_id: string })
-    | undefined;
+tasksRouter.patch('/:id', async (req: AuthedRequest, res) => {
+  const existing = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`, [
+    req.params.id,
+    req.userId!,
+  ]);
   if (!existing) return res.status(404).json({ message: 'Task not found' });
 
   const body = req.body ?? {};
@@ -134,7 +136,9 @@ tasksRouter.patch('/:id', (req: AuthedRequest, res) => {
           ? body.description.trim() || null
           : existing.description,
     priority: body.priority ?? current.priority,
-    status: body.status ?? (isCompleted ? 'completed' : current.status === 'completed' ? 'todo' : current.status),
+    status:
+      body.status ??
+      (isCompleted ? 'completed' : current.status === 'completed' ? 'todo' : current.status),
     category: body.category ?? current.category,
     tags_json: JSON.stringify(body.tags ?? current.tags),
     subtasks_json: JSON.stringify(body.subtasks ?? current.subtasks),
@@ -150,66 +154,66 @@ tasksRouter.patch('/:id', (req: AuthedRequest, res) => {
     updated_at: new Date().toISOString(),
   };
 
-  db.prepare(
+  await execute(
     `UPDATE tasks SET
       title = ?, description = ?, priority = ?, status = ?, category = ?,
       tags_json = ?, subtasks_json = ?, due_at = ?, reminder_at = ?,
       is_completed = ?, completed_at = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`,
-  ).run(
-    next.title,
-    next.description,
-    next.priority,
-    next.status,
-    next.category,
-    next.tags_json,
-    next.subtasks_json,
-    next.due_at,
-    next.reminder_at,
-    next.is_completed,
-    next.completed_at,
-    next.updated_at,
-    req.params.id,
-    req.userId!,
+    [
+      next.title,
+      next.description,
+      next.priority,
+      next.status,
+      next.category,
+      next.tags_json,
+      next.subtasks_json,
+      next.due_at,
+      next.reminder_at,
+      next.is_completed,
+      next.completed_at,
+      next.updated_at,
+      req.params.id,
+      req.userId!,
+    ],
   );
 
-  const row = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(req.params.id) as Parameters<
-    typeof mapTask
-  >[0];
-  return res.json(mapTask(row));
+  const row = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [req.params.id]);
+  return res.json(mapTask(row!));
 });
 
-tasksRouter.post('/:id/toggle', (req: AuthedRequest, res) => {
-  const existing = db
-    .prepare(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`)
-    .get(req.params.id, req.userId!) as Parameters<typeof mapTask>[0] | undefined;
+tasksRouter.post('/:id/toggle', async (req: AuthedRequest, res) => {
+  const existing = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ? AND user_id = ?`, [
+    req.params.id,
+    req.userId!,
+  ]);
   if (!existing) return res.status(404).json({ message: 'Task not found' });
 
   const current = mapTask(existing);
   const isCompleted = !current.isCompleted;
   const now = new Date().toISOString();
-  db.prepare(
+  await execute(
     `UPDATE tasks SET is_completed = ?, status = ?, completed_at = ?, updated_at = ?
      WHERE id = ? AND user_id = ?`,
-  ).run(
-    isCompleted ? 1 : 0,
-    isCompleted ? 'completed' : 'todo',
-    isCompleted ? now : null,
-    now,
-    req.params.id,
-    req.userId!,
+    [
+      isCompleted ? 1 : 0,
+      isCompleted ? 'completed' : 'todo',
+      isCompleted ? now : null,
+      now,
+      req.params.id,
+      req.userId!,
+    ],
   );
 
-  const row = db.prepare(`SELECT * FROM tasks WHERE id = ?`).get(req.params.id) as Parameters<
-    typeof mapTask
-  >[0];
-  return res.json(mapTask(row));
+  const row = await queryOne<TaskRow>(`SELECT * FROM tasks WHERE id = ?`, [req.params.id]);
+  return res.json(mapTask(row!));
 });
 
-tasksRouter.delete('/:id', (req: AuthedRequest, res) => {
-  const result = db
-    .prepare(`DELETE FROM tasks WHERE id = ? AND user_id = ?`)
-    .run(req.params.id, req.userId!);
+tasksRouter.delete('/:id', async (req: AuthedRequest, res) => {
+  const result = await execute(`DELETE FROM tasks WHERE id = ? AND user_id = ?`, [
+    req.params.id,
+    req.userId!,
+  ]);
   if (result.changes === 0) return res.status(404).json({ message: 'Task not found' });
   return res.status(204).send();
 });
