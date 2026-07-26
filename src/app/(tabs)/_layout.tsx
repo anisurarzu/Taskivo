@@ -21,9 +21,14 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
-            height: 56 + bottom,
-            paddingTop: 8,
+            height: 54 + bottom,
+            paddingTop: 6,
             paddingBottom: bottom,
+            elevation: 8,
+            shadowColor: '#0F172A',
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            shadowOffset: { width: 0, height: -2 },
           },
           tabBarLabelStyle: {
             fontSize: 11,
@@ -38,8 +43,8 @@ export default function TabsLayout() {
           name="index"
           options={{
             title: 'Home',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="home-outline" color={color} size={size} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'home' : 'home-outline'} color={color} size={size} />
             ),
           }}
         />
@@ -47,8 +52,12 @@ export default function TabsLayout() {
           name="calendar"
           options={{
             title: 'Calendar',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="calendar-outline" color={color} size={size} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons
+                name={focused ? 'calendar' : 'calendar-outline'}
+                color={color}
+                size={size}
+              />
             ),
           }}
         />
@@ -56,8 +65,8 @@ export default function TabsLayout() {
           name="focus"
           options={{
             title: 'Focus',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="timer-outline" color={color} size={size} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'timer' : 'timer-outline'} color={color} size={size} />
             ),
           }}
         />
@@ -65,8 +74,12 @@ export default function TabsLayout() {
           name="analytics"
           options={{
             title: 'Analytics',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="stats-chart-outline" color={color} size={size} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons
+                name={focused ? 'stats-chart' : 'stats-chart-outline'}
+                color={color}
+                size={size}
+              />
             ),
           }}
         />
@@ -74,8 +87,8 @@ export default function TabsLayout() {
           name="profile"
           options={{
             title: 'Profile',
-            tabBarIcon: ({ color, size }) => (
-              <Ionicons name="person-outline" color={color} size={size} />
+            tabBarIcon: ({ color, size, focused }) => (
+              <Ionicons name={focused ? 'person' : 'person-outline'} color={color} size={size} />
             ),
           }}
         />

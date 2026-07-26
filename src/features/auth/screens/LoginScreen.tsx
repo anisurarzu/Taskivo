@@ -28,18 +28,22 @@ export function AuthLoginScreen({ onSuccess, onRegister, onForgotPassword }: Log
   const { control, handleSubmit, setValue, watch } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'demo@taskivo.app',
-      password: 'Taskivo123',
+      email: '',
+      password: '',
       rememberMe: true,
     },
   });
 
   const rememberMe = watch('rememberMe');
 
+  const fillDemo = () => {
+    setValue('email', 'demo@taskivo.app');
+    setValue('password', 'Taskivo123');
+  };
+
   const onSubmit = handleSubmit(async (values) => {
     clearError();
     try {
-      // Wake Render free tier before auth (avoids first-request timeout).
       const { apiClient, isMockApi } = await import('@/services/api');
       if (!isMockApi()) {
         await apiClient.get('/health').catch(() => undefined);
@@ -126,9 +130,15 @@ export function AuthLoginScreen({ onSuccess, onRegister, onForgotPassword }: Log
           onPress={onSubmit}
         />
 
+        <Pressable onPress={fillDemo} className="mt-3 items-center py-2">
+          <Text className="text-xs font-semibold text-primary">Use demo account</Text>
+        </Pressable>
+
         <View className="my-4 flex-row items-center">
           <View className="h-px flex-1 bg-border dark:bg-border-dark" />
-          <Text className="mx-2.5 text-xs text-ink-muted">or continue with</Text>
+          <Text className="mx-2.5 text-xs text-ink-muted dark:text-ink-dark-secondary">
+            or continue with
+          </Text>
           <View className="h-px flex-1 bg-border dark:bg-border-dark" />
         </View>
 

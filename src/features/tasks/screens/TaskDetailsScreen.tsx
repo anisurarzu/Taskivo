@@ -122,12 +122,13 @@ export function TaskDetailsScreen({
 
         <Text className="mb-3 text-3xl font-bold text-ink dark:text-ink-dark">{task.title}</Text>
 
-        <Text className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-muted dark:text-ink-dark-secondary">
-          Notes
-        </Text>
-        <Text className="mb-8 text-base leading-7 text-ink-secondary dark:text-ink-dark-secondary">
-          {task.description?.trim() ? task.description : 'No notes added yet.'}
-        </Text>
+        {task.description?.trim() ? (
+          <Text className="mb-8 text-base leading-7 text-ink-secondary dark:text-ink-dark-secondary">
+            {task.description}
+          </Text>
+        ) : (
+          <View className="mb-8" />
+        )}
 
         <Card className="mb-6">
           {[
@@ -253,12 +254,6 @@ export function TaskDetailsScreen({
               });
             }}
           />
-          <SecondaryButton label="Edit task" onPress={onEdit} />
-          <SecondaryButton
-            label="Delete task"
-            onPress={() => setConfirmDelete(true)}
-            className="border-danger"
-          />
         </View>
       </Animated.View>
 
@@ -271,11 +266,15 @@ export function TaskDetailsScreen({
           “{task.title}” will be permanently removed. This cannot be undone.
         </Text>
         <View className="gap-3">
-          <PrimaryButton
-            label="Delete"
-            loading={deleteTask.isPending}
+          <Pressable
+            disabled={deleteTask.isPending}
             onPress={() => void onDelete()}
-          />
+            className="h-11 items-center justify-center rounded-lg bg-danger"
+          >
+            <Text className="text-sm font-semibold text-white">
+              {deleteTask.isPending ? 'Deleting…' : 'Delete'}
+            </Text>
+          </Pressable>
           <SecondaryButton
             label="Cancel"
             onPress={() => setConfirmDelete(false)}

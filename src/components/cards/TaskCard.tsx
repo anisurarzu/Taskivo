@@ -49,6 +49,9 @@ export function TaskCard({ task, onPress, onToggle, compact = false }: TaskCardP
     transform: [{ scale: checkScale.value }],
   }));
 
+  const isOverdue =
+    Boolean(task.dueAt) && !task.isCompleted && new Date(task.dueAt!).getTime() < Date.now();
+
   return (
     <AnimatedPressable
       onPressIn={() => {
@@ -63,9 +66,9 @@ export function TaskCard({ task, onPress, onToggle, compact = false }: TaskCardP
       }}
       style={animatedStyle}
       className={cn(
-        'mb-2.5 w-full flex-row items-start rounded-lg border border-border bg-card dark:border-border-dark dark:bg-card-dark',
-        compact ? 'p-3' : 'p-3.5',
-        task.isCompleted && 'opacity-55',
+        'mb-3 w-full flex-row items-start rounded-card border border-border bg-card dark:border-border-dark dark:bg-card-dark',
+        compact ? 'p-3.5' : 'p-4',
+        task.isCompleted && 'opacity-60',
       )}
     >
       <Pressable
@@ -80,52 +83,62 @@ export function TaskCard({ task, onPress, onToggle, compact = false }: TaskCardP
           success();
           onToggle?.();
         }}
-        className="mr-2.5 mt-0.5"
+        className="mr-3 mt-0.5"
       >
         <Animated.View
           style={checkStyle}
           className={cn(
-            'h-5 w-5 items-center justify-center rounded-full border-2',
+            'h-6 w-6 items-center justify-center rounded-full border-2',
             task.isCompleted
               ? 'border-success bg-success'
               : 'border-border dark:border-border-dark',
           )}
         >
-          {task.isCompleted ? <Ionicons name="checkmark" size={11} color="#FFFFFF" /> : null}
+          {task.isCompleted ? <Ionicons name="checkmark" size={12} color="#FFFFFF" /> : null}
         </Animated.View>
       </Pressable>
 
       <View className="min-w-0 flex-1">
-        <View className="mb-1.5 flex-row flex-wrap items-center gap-1.5">
-          <View className={cn('rounded-full px-2 py-0.5', priorityClass[task.priority])}>
-            <Text className={cn('text-[10px] font-semibold', priorityText[task.priority])}>
-              {PRIORITY_LABELS[task.priority]}
-            </Text>
-          </View>
-          {task.dueAt ? (
-            <View className="flex-row items-center">
-              <Ionicons name="time-outline" size={11} color={colors.textSecondary} />
-              <Text className="ml-0.5 text-[11px] text-ink-secondary dark:text-ink-dark-secondary">
-                {formatTime(task.dueAt)}
-              </Text>
-            </View>
-          ) : null}
-        </View>
-
         <Text
           numberOfLines={2}
           className={cn(
-            'mb-1 text-sm font-semibold leading-5 text-ink dark:text-ink-dark',
+            'mb-2 text-base font-semibold leading-6 text-ink dark:text-ink-dark',
             task.isCompleted && 'line-through',
           )}
         >
           {task.title}
         </Text>
 
-        <View className="self-start rounded bg-surface-elevated px-1.5 py-0.5 dark:bg-surface-elevated-dark">
-          <Text className="text-[10px] font-medium text-ink-secondary dark:text-ink-dark-secondary">
-            {CATEGORY_LABELS[task.category]}
-          </Text>
+        <View className="flex-row flex-wrap items-center gap-2">
+          <View className={cn('rounded-full px-2.5 py-1', priorityClass[task.priority])}>
+            <Text className={cn('text-[11px] font-semibold', priorityText[task.priority])}>
+              {PRIORITY_LABELS[task.priority]}
+            </Text>
+          </View>
+          <View className="rounded-full bg-surface-elevated px-2.5 py-1 dark:bg-surface-elevated-dark">
+            <Text className="text-[11px] font-medium text-ink-secondary dark:text-ink-dark-secondary">
+              {CATEGORY_LABELS[task.category]}
+            </Text>
+          </View>
+          {task.dueAt ? (
+            <View className="flex-row items-center">
+              <Ionicons
+                name="time-outline"
+                size={12}
+                color={isOverdue ? colors.danger : colors.textSecondary}
+              />
+              <Text
+                className={cn(
+                  'ml-1 text-[11px] font-medium',
+                  isOverdue
+                    ? 'text-danger'
+                    : 'text-ink-secondary dark:text-ink-dark-secondary',
+                )}
+              >
+                {formatTime(task.dueAt)}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
     </AnimatedPressable>

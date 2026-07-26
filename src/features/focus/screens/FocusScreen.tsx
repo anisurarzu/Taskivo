@@ -11,7 +11,7 @@ import { PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { Screen } from '@/components/common';
 import { Card } from '@/components/cards';
 import { colors } from '@/theme/colors';
-import { useHaptics } from '@/hooks';
+import { useHaptics, useThemeColors } from '@/hooks';
 import { cn } from '@/utils/cn';
 import { useTasksQuery, getActiveTasks } from '@/features/tasks';
 import { FOCUS_PRESETS_MINUTES } from '../types';
@@ -32,6 +32,7 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function FocusScreen() {
+  const themeColors = useThemeColors();
   const { success, medium } = useHaptics();
   const durationMinutes = useFocusUiStore((s) => s.durationMinutes);
   const linkedTask = useFocusUiStore((s) => s.linkedTask);
@@ -142,9 +143,14 @@ export function FocusScreen() {
         <Text className="mb-1 self-start text-3xl font-bold text-ink dark:text-ink-dark">
           Focus
         </Text>
-        <Text className="mb-4 self-start text-base text-ink-secondary dark:text-ink-dark-secondary">
-          Deep work · {durationMinutes} min · {formatFocusDuration(weekFocus)} this week
+        <Text className="mb-3 self-start text-base text-ink-secondary dark:text-ink-dark-secondary">
+          {durationMinutes}-minute deep work session
         </Text>
+        <View className="mb-5 self-start rounded-full bg-primary/10 px-3 py-1">
+          <Text className="text-xs font-semibold text-primary">
+            {formatFocusDuration(weekFocus)} this week
+          </Text>
+        </View>
 
         <View className="mb-5 w-full flex-row flex-wrap gap-2">
           {FOCUS_PRESETS_MINUTES.map((preset) => {
@@ -180,7 +186,7 @@ export function FocusScreen() {
                 cx={SIZE / 2}
                 cy={SIZE / 2}
                 r={RADIUS}
-                stroke="#E5E7EB"
+                stroke={themeColors.border}
                 strokeWidth={STROKE}
                 fill="none"
               />
@@ -270,7 +276,8 @@ export function FocusScreen() {
                   {session.taskTitle ?? 'Open focus'}
                 </Text>
                 <Text className="mt-0.5 text-xs text-ink-secondary dark:text-ink-dark-secondary">
-                  {formatFocusDuration(session.completedSeconds)} · {session.status}
+                  {formatFocusDuration(session.completedSeconds)} ·{' '}
+                  {session.status === 'completed' ? 'Completed' : 'Stopped early'}
                 </Text>
               </View>
             ))

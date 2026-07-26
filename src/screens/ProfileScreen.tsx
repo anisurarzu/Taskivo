@@ -8,7 +8,6 @@ import { SecondaryButton } from '@/components/buttons';
 import { useThemeColors } from '@/hooks';
 import { useAuthStore } from '@/features/auth';
 import { useAnalytics } from '@/features/analytics';
-import { API_CONFIG } from '@/services/api/config';
 
 interface ProfileScreenProps {
   onSettings: () => void;
@@ -22,7 +21,7 @@ export function ProfileScreen({ onSettings, onNotifications, onSignOut }: Profil
   const { completed, streak } = useAnalytics();
 
   const name = user?.name ?? 'Taskivo user';
-  const email = user?.email ?? 'signed-in locally';
+  const email = user?.email ?? 'Add your email';
 
   const menuItems = [
     { label: 'Preferences', icon: 'options-outline' as const, onPress: onSettings },
@@ -32,12 +31,6 @@ export function ProfileScreen({ onSettings, onNotifications, onSignOut }: Profil
       onPress: onNotifications,
     },
     { label: 'Account', icon: 'person-outline' as const, onPress: onSettings },
-    {
-      label: 'Data source',
-      icon: 'cloud-outline' as const,
-      value: API_CONFIG.useMock ? 'Local mock' : 'API',
-      onPress: onSettings,
-    },
   ];
 
   return (
@@ -48,20 +41,22 @@ export function ProfileScreen({ onSettings, onNotifications, onSignOut }: Profil
         <Text className="mt-1 text-sm text-ink-secondary dark:text-ink-dark-secondary">
           {email}
         </Text>
-        <View className="mt-3 rounded-full bg-primary/10 px-3 py-1">
-          <Text className="text-xs font-semibold uppercase tracking-wide text-primary">
-            {user?.emailVerified ? 'Verified' : 'Local'} account
-          </Text>
-        </View>
+        {user?.emailVerified ? (
+          <View className="mt-3 rounded-full bg-primary/10 px-3 py-1">
+            <Text className="text-xs font-semibold uppercase tracking-wide text-primary">
+              Verified
+            </Text>
+          </View>
+        ) : null}
 
         <View className="mt-6 w-full flex-row gap-3">
-          <Card className="min-w-0 flex-1 items-center py-3">
+          <Card className="min-w-0 flex-1 items-center py-3.5">
             <Text className="text-xl font-bold text-ink dark:text-ink-dark">{completed}</Text>
             <Text className="mt-1 text-xs text-ink-secondary dark:text-ink-dark-secondary">
               Completed
             </Text>
           </Card>
-          <Card className="min-w-0 flex-1 items-center py-3">
+          <Card className="min-w-0 flex-1 items-center py-3.5">
             <Text className="text-xl font-bold text-ink dark:text-ink-dark">{streak}d</Text>
             <Text className="mt-1 text-xs text-ink-secondary dark:text-ink-dark-secondary">
               Focus streak
@@ -86,11 +81,6 @@ export function ProfileScreen({ onSettings, onNotifications, onSignOut }: Profil
               <Text className="flex-1 text-base font-medium text-ink dark:text-ink-dark">
                 {item.label}
               </Text>
-              {'value' in item && item.value ? (
-                <Text className="mr-2 text-xs text-ink-secondary dark:text-ink-dark-secondary">
-                  {item.value}
-                </Text>
-              ) : null}
               <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
             </Pressable>
           ))}

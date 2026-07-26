@@ -218,7 +218,7 @@ export function TaskFormScreen({ mode, taskId, onBack, onSuccess }: TaskFormScre
               options={categoryOptions}
               value={value}
               onChange={onChange}
-              activeClassName="bg-secondary"
+              activeClassName="bg-primary"
             />
           )}
         />
