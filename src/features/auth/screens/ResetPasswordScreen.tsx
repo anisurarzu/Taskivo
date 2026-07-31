@@ -1,11 +1,12 @@
 import { Controller, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PrimaryButton, SecondaryButton } from '@/components/buttons';
-import { Screen } from '@/components/common';
 import { AppTextInput } from '@/components/inputs';
+import { AuthShell } from '../components/AuthShell';
 import { AuthHeader } from '../components/AuthHeader';
+import { AuthErrorBanner } from '../components/AuthErrorBanner';
 import { AuthSuccess } from '../components/AuthSuccess';
 import { useResetPasswordMutation } from '../hooks/useAuthMutations';
 import { resetPasswordSchema, type ResetPasswordFormValues } from '../validation/schemas';
@@ -34,38 +35,39 @@ export function ResetPasswordScreen({ onSuccess, onBack }: ResetPasswordScreenPr
       await mutation.mutateAsync(values);
       setDone(true);
     } catch {
-      // store error
+      // store
     }
   });
 
   if (done) {
     return (
-      <Screen scroll>
+      <AuthShell>
         <AuthSuccess
           title="Password updated"
-          description="Your password has been reset successfully. You’re signed in and ready to go."
+          description="Your password has been reset. You’re signed in and ready to go."
           primaryLabel="Go to home"
           onPrimary={onSuccess}
         />
-      </Screen>
+      </AuthShell>
     );
   }
 
   return (
-    <Screen scroll>
-      <Animated.View entering={FadeInDown.duration(420)}>
+    <AuthShell>
+      <Animated.View entering={FadeInDown.duration(380).springify().damping(18)}>
         <AuthHeader
-          title="Create new password"
+          title="New password"
           subtitle="Choose a strong password you haven’t used before."
           showBrand={false}
         />
 
-        <View className="mb-6 gap-4">
+        <View className="mb-6 gap-5">
           <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="New password"
                 placeholder="Create a password"
                 secureTextEntry
@@ -82,6 +84,7 @@ export function ResetPasswordScreen({ onSuccess, onBack }: ResetPasswordScreenPr
             name="confirmPassword"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="Confirm password"
                 placeholder="Repeat your password"
                 secureTextEntry
@@ -95,17 +98,18 @@ export function ResetPasswordScreen({ onSuccess, onBack }: ResetPasswordScreenPr
           />
         </View>
 
-        {storeError ? <Text className="mb-3 text-sm text-danger">{storeError}</Text> : null}
+        {storeError ? <AuthErrorBanner message={storeError} /> : null}
 
-        <View className="gap-3">
+        <View className="gap-3.5">
           <PrimaryButton
+            size="lg"
             label="Update password"
             loading={mutation.isPending}
             onPress={onSubmit}
           />
-          <SecondaryButton label="Back" onPress={onBack} />
+          <SecondaryButton size="lg" label="Back" onPress={onBack} />
         </View>
       </Animated.View>
-    </Screen>
+    </AuthShell>
   );
 }

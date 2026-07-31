@@ -15,6 +15,13 @@ export function useLoginMutation() {
   });
 }
 
+export function useDemoLoginMutation() {
+  const loginDemo = useAuthStore((s) => s.loginDemo);
+  return useMutation({
+    mutationFn: () => loginDemo(),
+  });
+}
+
 export function useRegisterMutation() {
   const register = useAuthStore((s) => s.register);
   return useMutation({

@@ -9,6 +9,7 @@ import { AppTextInput } from '@/components/inputs';
 import { Loading, EmptyState } from '@/components/ui';
 import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/constants';
 import type { TaskCategory, TaskSubtask, Priority } from '../types';
+import { TASK_CATEGORIES } from '../types';
 import {
   useCreateTaskMutation,
   useTaskQuery,
@@ -71,7 +72,9 @@ export function TaskFormScreen({ mode, taskId, onBack, onSuccess }: TaskFormScre
       title: task.title,
       description: task.description ?? '',
       priority: task.priority,
-      category: task.category,
+      category: (TASK_CATEGORIES as readonly string[]).includes(task.category)
+        ? (task.category as TaskCategory)
+        : 'work',
       tagsText: task.tags.join(', '),
       dueAt: task.dueAt ?? null,
     });

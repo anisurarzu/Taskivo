@@ -12,6 +12,8 @@ export default function HomeRoute() {
       onCreateTask={() => router.push('/task/create')}
       onFocus={() => router.push('/(tabs)/focus')}
       onCalendar={() => router.push('/(tabs)/calendar')}
+      onOrganizations={() => router.push('/(tabs)/organizations')}
+      onBudgets={() => router.push('/(tabs)/budget')}
     />
   );
 }

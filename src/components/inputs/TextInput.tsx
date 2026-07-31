@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import { Text, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, Text, TextInput, View, type TextInputProps } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { cn } from '@/utils/cn';
 import { useThemeColors } from '@/hooks';
@@ -12,7 +12,8 @@ interface AppTextInputProps extends TextInputProps {
   rightIcon?: keyof typeof Ionicons.glyphMap;
   onRightIconPress?: () => void;
   containerClassName?: string;
-  size?: 'sm' | 'md';
+  /** sm=44 · md=52 · lg=56 — auth screens use lg */
+  size?: 'sm' | 'md' | 'lg';
 }
 
 export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
@@ -35,7 +36,11 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
     const colors = useThemeColors();
     const [focused, setFocused] = useState(false);
     const [hidden, setHidden] = useState(secureTextEntry);
-    const heightClass = size === 'sm' ? 'h-10' : 'h-11';
+
+    const heightClass = size === 'sm' ? 'h-11' : size === 'lg' ? 'h-14' : 'h-12';
+    const radiusClass = 'rounded-xl';
+    const iconSize = size === 'lg' ? 20 : 18;
+    const textSize = size === 'lg' ? 'text-[16px]' : 'text-[15px]';
 
     const resolvedRightIcon =
       secureTextEntry !== undefined
@@ -47,24 +52,27 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
     return (
       <View className={cn('w-full', containerClassName)}>
         {label ? (
-          <Text className="mb-1.5 text-xs font-medium text-ink-secondary dark:text-ink-dark-secondary">
+          <Text className="mb-2 text-[14px] font-semibold text-ink dark:text-ink-dark">
             {label}
           </Text>
         ) : null}
         <View
           className={cn(
-            'flex-row items-center rounded-lg border bg-card px-3 dark:bg-card-dark',
+            'flex-row items-center border bg-card px-4 dark:bg-card-dark',
             heightClass,
-            focused ? 'border-primary' : 'border-border dark:border-border-dark',
-            error && 'border-danger',
+            radiusClass,
+            focused
+              ? 'border-primary bg-primary/[0.04] dark:bg-primary/10'
+              : 'border-border dark:border-border-dark',
+            error && 'border-danger bg-danger/[0.04]',
           )}
         >
           {leftIcon ? (
             <Ionicons
               name={leftIcon}
-              size={16}
-              color={colors.textSecondary}
-              style={{ marginRight: 8 }}
+              size={iconSize}
+              color={focused ? colors.primary : colors.textMuted}
+              style={{ marginRight: 12 }}
             />
           ) : null}
           <TextInput
@@ -79,26 +87,31 @@ export const AppTextInput = forwardRef<TextInput, AppTextInputProps>(
               setFocused(false);
               props.onBlur?.(e);
             }}
-            className={cn('flex-1 text-sm text-ink dark:text-ink-dark', className)}
+            className={cn(
+              'flex-1 py-0 leading-5 text-ink dark:text-ink-dark',
+              textSize,
+              className,
+            )}
             {...props}
           />
           {resolvedRightIcon ? (
-            <Ionicons
-              name={resolvedRightIcon}
-              size={16}
-              color={colors.textSecondary}
+            <Pressable
+              hitSlop={10}
               onPress={() => {
                 if (secureTextEntry !== undefined) {
                   setHidden((v) => !v);
                 }
                 onRightIconPress?.();
               }}
-            />
+              className="ml-1 h-9 w-9 items-center justify-center"
+            >
+              <Ionicons name={resolvedRightIcon} size={iconSize} color={colors.textMuted} />
+            </Pressable>
           ) : null}
         </View>
-        {error ? <Text className="mt-1 text-xs text-danger">{error}</Text> : null}
+        {error ? <Text className="mt-1.5 text-[13px] text-danger">{error}</Text> : null}
         {!error && hint ? (
-          <Text className="mt-1 text-xs text-ink-muted">{hint}</Text>
+          <Text className="mt-1.5 text-[13px] text-ink-muted">{hint}</Text>
         ) : null}
       </View>
     );

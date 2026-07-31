@@ -29,18 +29,19 @@ export function SecondaryButton({
   }));
 
   const sizeClass =
-    size === 'sm' ? 'h-9 px-3.5' : size === 'lg' ? 'h-12 px-5' : 'h-11 px-4';
-  const textClass = size === 'sm' ? 'text-xs' : 'text-sm';
+    size === 'sm' ? 'h-11 px-4' : size === 'lg' ? 'h-14 px-6' : 'h-12 px-5';
+  const textClass = size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[17px]' : 'text-[16px]';
+  const radiusClass = 'rounded-xl';
 
   return (
     <AnimatedPressable
       accessibilityRole="button"
       disabled={disabled}
       onPressIn={() => {
-        scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(0.98, { damping: 16, stiffness: 320 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(1, { damping: 16, stiffness: 320 });
       }}
       onPress={(e) => {
         light();
@@ -48,7 +49,8 @@ export function SecondaryButton({
       }}
       style={animatedStyle}
       className={cn(
-        'items-center justify-center rounded-lg border border-border bg-card dark:border-border-dark dark:bg-card-dark',
+        'items-center justify-center border border-border bg-card dark:border-border-dark dark:bg-card-dark',
+        radiusClass,
         sizeClass,
         fullWidth && 'w-full',
         disabled && 'opacity-50',
@@ -56,7 +58,9 @@ export function SecondaryButton({
       )}
       {...props}
     >
-      <Text className={cn('font-semibold text-ink dark:text-ink-dark', textClass)}>{label}</Text>
+      <Text className={cn('font-semibold tracking-tight text-ink dark:text-ink-dark', textClass)}>
+        {label}
+      </Text>
     </AnimatedPressable>
   );
 }

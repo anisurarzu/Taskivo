@@ -31,18 +31,19 @@ export function PrimaryButton({
   }));
 
   const sizeClass =
-    size === 'sm' ? 'h-9 px-3.5' : size === 'lg' ? 'h-12 px-5' : 'h-11 px-4';
-  const textClass = size === 'sm' ? 'text-xs' : 'text-sm';
+    size === 'sm' ? 'h-11 px-4' : size === 'lg' ? 'h-14 px-6' : 'h-12 px-5';
+  const textClass = size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[17px]' : 'text-[16px]';
+  const radiusClass = 'rounded-xl';
 
   return (
     <AnimatedPressable
       accessibilityRole="button"
       disabled={disabled || loading}
       onPressIn={() => {
-        scale.value = withSpring(0.97, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(0.98, { damping: 16, stiffness: 320 });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 300 });
+        scale.value = withSpring(1, { damping: 16, stiffness: 320 });
       }}
       onPress={(e) => {
         light();
@@ -50,7 +51,8 @@ export function PrimaryButton({
       }}
       style={animatedStyle}
       className={cn(
-        'items-center justify-center rounded-lg bg-primary active:bg-primary-dark',
+        'items-center justify-center bg-primary active:bg-primary-dark',
+        radiusClass,
         sizeClass,
         fullWidth && 'w-full',
         (disabled || loading) && 'opacity-50',
@@ -61,7 +63,7 @@ export function PrimaryButton({
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text className={cn('font-semibold text-white', textClass)}>{label}</Text>
+        <Text className={cn('font-semibold tracking-tight text-white', textClass)}>{label}</Text>
       )}
     </AnimatedPressable>
   );

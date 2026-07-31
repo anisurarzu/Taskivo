@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { CreateTaskInput, TaskListFilter, UpdateTaskInput } from '../types';
+import type { CreateTaskInput, Task, TaskListFilter, UpdateTaskInput } from '../types';
 import { taskKeys } from './query-keys';
 import { taskRepository } from '../services/task-repository';
 import { cancelTaskReminder, syncTaskReminder } from '@/features/notifications';
@@ -78,4 +78,40 @@ export function useDeleteTaskMutation() {
       await queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
+}
+
+function useTrackingMutation(
+  action: (id: string, extra?: number) => Promise<Task>,
+) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, minutes }: { id: string; minutes?: number }) =>
+      action(id, minutes),
+    onSuccess: async (task) => {
+      await queryClient.invalidateQueries({ queryKey: taskKeys.all });
+      await queryClient.invalidateQueries({ queryKey: taskKeys.detail(task.id) });
+    },
+  });
+}
+
+export function useStartTrackingMutation() {
+  return useTrackingMutation((id) => taskRepository.trackingStart(id));
+}
+
+export function useBreakTrackingMutation() {
+  return useTrackingMutation((id, minutes) =>
+    taskRepository.trackingBreak(id, minutes),
+  );
+}
+
+export function useResumeTrackingMutation() {
+  return useTrackingMutation((id) => taskRepository.trackingResume(id));
+}
+
+export function useEndTrackingMutation() {
+  return useTrackingMutation((id) => taskRepository.trackingEnd(id));
+}
+
+export function useCompleteTrackingMutation() {
+  return useTrackingMutation((id) => taskRepository.trackingComplete(id));
 }

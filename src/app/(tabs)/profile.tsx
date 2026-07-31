@@ -15,6 +15,11 @@ export default function ProfileRoute() {
     <ProfileScreen
       onSettings={() => router.push('/settings')}
       onNotifications={() => router.push('/notifications')}
+      onEditProfile={() => router.push('/profile/edit')}
+      onOrganizations={() => router.push('/(tabs)/organizations')}
+      onBudgets={() => router.push('/(tabs)/budget')}
+      onAnalytics={() => router.push('/(tabs)/analytics')}
+      onCalendar={() => router.push('/(tabs)/calendar')}
       onSignOut={async () => {
         await logoutMutation.mutateAsync();
         router.replace('/(auth)/login');

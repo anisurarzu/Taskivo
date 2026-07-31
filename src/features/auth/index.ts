@@ -13,5 +13,7 @@ export { EmailVerificationScreen } from './screens/EmailVerificationScreen';
 export { OtpVerificationScreen } from './screens/OtpVerificationScreen';
 export { ResetPasswordScreen } from './screens/ResetPasswordScreen';
 export { AuthOnboardingScreen } from './screens/OnboardingScreen';
+export { ProfileEditScreen } from './screens/ProfileEditScreen';
+export { AuthShell } from './components/AuthShell';
 export { ProtectedRoute } from './components/ProtectedRoute';
 export { PublicRoute } from './components/PublicRoute';

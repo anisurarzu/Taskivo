@@ -3,9 +3,10 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Pressable, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PrimaryButton } from '@/components/buttons';
-import { Screen } from '@/components/common';
 import { AppTextInput } from '@/components/inputs';
+import { AuthShell } from '../components/AuthShell';
 import { AuthHeader } from '../components/AuthHeader';
+import { AuthErrorBanner } from '../components/AuthErrorBanner';
 import { useRegisterMutation } from '../hooks/useAuthMutations';
 import { registerSchema, type RegisterFormValues } from '../validation/schemas';
 import { useAuthStore } from '../store/auth-store';
@@ -31,27 +32,30 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
       await registerMutation.mutateAsync(values);
       onSuccess();
     } catch {
-      // store error
+      // store
     }
   });
 
   return (
-    <Screen scroll>
-      <Animated.View entering={FadeInDown.duration(420)}>
+    <AuthShell dense>
+      <Animated.View entering={FadeInDown.duration(380).springify().damping(18)}>
         <AuthHeader
           title="Create account"
-          subtitle="Set up your workspace in under a minute."
+          subtitle="Set up your workspace in under a minute and stay in sync across web and mobile."
         />
 
-        <View className="mb-4 gap-3">
+        <View className="mb-6 gap-5">
           <Controller
             control={control}
             name="name"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="Full name"
                 placeholder="Alex Morgan"
                 leftIcon="person-outline"
+                autoCapitalize="words"
+                autoComplete="name"
                 value={value}
                 onChangeText={onChange}
                 onBlur={onBlur}
@@ -64,10 +68,13 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
             name="email"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="Email"
                 placeholder="you@example.com"
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
                 leftIcon="mail-outline"
                 value={value}
                 onChangeText={onChange}
@@ -81,6 +88,7 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
             name="password"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="Password"
                 placeholder="Create a password"
                 secureTextEntry
@@ -89,7 +97,7 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
                 onChangeText={onChange}
                 onBlur={onBlur}
                 error={error?.message}
-                hint="Min 8 chars, 1 uppercase, 1 number"
+                hint="At least 8 characters, 1 uppercase, 1 number"
               />
             )}
           />
@@ -98,6 +106,7 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
             name="confirmPassword"
             render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
               <AppTextInput
+                size="lg"
                 label="Confirm password"
                 placeholder="Repeat your password"
                 secureTextEntry
@@ -111,20 +120,22 @@ export function AuthRegisterScreen({ onSuccess, onLogin }: RegisterScreenProps) 
           />
         </View>
 
-        {storeError ? <Text className="mb-3 text-sm text-danger">{storeError}</Text> : null}
+        {storeError ? <AuthErrorBanner message={storeError} /> : null}
 
         <PrimaryButton
+          size="lg"
           label="Create account"
           loading={registerMutation.isPending}
           onPress={onSubmit}
         />
 
-        <Pressable onPress={onLogin} className="mt-6 items-center">
-          <Text className="text-sm text-ink-secondary dark:text-ink-dark-secondary">
-            Already have an account? <Text className="font-semibold text-primary">Sign in</Text>
+        <Pressable onPress={onLogin} className="mt-8 items-center py-2">
+          <Text className="text-[15px] text-ink-secondary dark:text-ink-dark-secondary">
+            Already have an account?{' '}
+            <Text className="font-bold text-primary">Sign in</Text>
           </Text>
         </Pressable>
       </Animated.View>
-    </Screen>
+    </AuthShell>
   );
 }

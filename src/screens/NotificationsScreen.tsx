@@ -18,13 +18,20 @@ interface NotificationsScreenProps {
   onBack: () => void;
 }
 
-const iconForType = {
+const iconForType: Record<string, keyof typeof Ionicons.glyphMap> = {
   task_due: 'alarm-outline',
   task_reminder: 'notifications-outline',
   focus_complete: 'flame-outline',
   weekly_summary: 'stats-chart-outline',
   system: 'information-circle-outline',
-} as const;
+  org_invite: 'people-outline',
+  org_invite_accepted: 'checkmark-circle-outline',
+  org_invite_declined: 'close-circle-outline',
+  chat_mention: 'chatbubble-outline',
+  task_scheduled_start: 'play-outline',
+  task_schedule_ending_soon: 'time-outline',
+};
+
 
 export function NotificationsScreen({ onBack }: NotificationsScreenProps) {
   const { data: tasks = [] } = useTasksQuery();

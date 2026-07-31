@@ -27,6 +27,10 @@ function RootNavigator() {
         <Stack.Screen name="settings" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="search" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="profile/edit" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="organization/[orgId]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="team/[teamId]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="budget/[budgetId]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="task/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen
           name="task/create"

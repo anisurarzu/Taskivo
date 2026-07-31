@@ -2,8 +2,7 @@ import { apiClient } from '@/services/api';
 import type { CreateTaskInput, TaskListFilter, UpdateTaskInput } from '../types';
 
 /**
- * Axios API layer — ready for real backend endpoints.
- * Hooks currently use the mock service; swap here when API is live.
+ * Tasks API — mirrors Taskivo-Web/src/services/api/tasks.ts
  */
 export const taskApi = {
   list: (filter?: TaskListFilter) => apiClient.get('/tasks', { params: filter }),
@@ -12,4 +11,10 @@ export const taskApi = {
   update: (id: string, payload: UpdateTaskInput) => apiClient.patch(`/tasks/${id}`, payload),
   remove: (id: string) => apiClient.delete(`/tasks/${id}`),
   toggleComplete: (id: string) => apiClient.post(`/tasks/${id}/toggle`),
+  trackingStart: (id: string) => apiClient.post(`/tasks/${id}/tracking/start`),
+  trackingBreak: (id: string, body?: { plannedBreakMinutes?: number }) =>
+    apiClient.post(`/tasks/${id}/tracking/break`, body ?? {}),
+  trackingResume: (id: string) => apiClient.post(`/tasks/${id}/tracking/resume`),
+  trackingEnd: (id: string) => apiClient.post(`/tasks/${id}/tracking/end`),
+  trackingComplete: (id: string) => apiClient.post(`/tasks/${id}/tracking/complete`),
 };

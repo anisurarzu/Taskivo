@@ -12,42 +12,66 @@ import { useAnalytics } from '@/features/analytics';
 interface ProfileScreenProps {
   onSettings: () => void;
   onNotifications: () => void;
+  onEditProfile: () => void;
+  onOrganizations: () => void;
+  onBudgets: () => void;
+  onAnalytics: () => void;
+  onCalendar: () => void;
   onSignOut: () => void;
 }
 
-export function ProfileScreen({ onSettings, onNotifications, onSignOut }: ProfileScreenProps) {
+export function ProfileScreen({
+  onSettings,
+  onNotifications,
+  onEditProfile,
+  onOrganizations,
+  onBudgets,
+  onAnalytics,
+  onCalendar,
+  onSignOut,
+}: ProfileScreenProps) {
   const theme = useThemeColors();
   const user = useAuthStore((s) => s.user);
+  const isDemo = useAuthStore((s) => s.isDemo);
   const { completed, streak } = useAnalytics();
 
   const name = user?.name ?? 'Taskivo user';
   const email = user?.email ?? 'Add your email';
 
   const menuItems = [
+    { label: 'Edit profile', icon: 'create-outline' as const, onPress: onEditProfile },
+    { label: 'Organizations', icon: 'people-outline' as const, onPress: onOrganizations },
+    { label: 'Budgets', icon: 'wallet-outline' as const, onPress: onBudgets },
+    { label: 'Analytics', icon: 'stats-chart-outline' as const, onPress: onAnalytics },
+    { label: 'Calendar', icon: 'calendar-outline' as const, onPress: onCalendar },
     { label: 'Preferences', icon: 'options-outline' as const, onPress: onSettings },
-    {
-      label: 'Notifications',
-      icon: 'notifications-outline' as const,
-      onPress: onNotifications,
-    },
-    { label: 'Account', icon: 'person-outline' as const, onPress: onSettings },
+    { label: 'Notifications', icon: 'notifications-outline' as const, onPress: onNotifications },
   ];
 
   return (
     <Screen scroll tabBar>
-      <Animated.View entering={FadeInDown.duration(400)} className="items-center pt-4">
+      <Animated.View entering={FadeInDown.duration(360)} className="items-center pt-3">
         <Avatar name={name} uri={user?.avatarUrl} size="xl" />
         <Text className="mt-4 text-2xl font-bold text-ink dark:text-ink-dark">{name}</Text>
         <Text className="mt-1 text-sm text-ink-secondary dark:text-ink-dark-secondary">
           {email}
         </Text>
-        {user?.emailVerified ? (
-          <View className="mt-3 rounded-full bg-primary/10 px-3 py-1">
-            <Text className="text-xs font-semibold uppercase tracking-wide text-primary">
-              Verified
-            </Text>
-          </View>
-        ) : null}
+        <View className="mt-3 flex-row gap-2">
+          {user?.emailVerified ? (
+            <View className="rounded-full bg-primary/10 px-3 py-1">
+              <Text className="text-xs font-semibold uppercase tracking-wide text-primary">
+                Verified
+              </Text>
+            </View>
+          ) : null}
+          {isDemo ? (
+            <View className="rounded-full bg-warning/15 px-3 py-1">
+              <Text className="text-xs font-semibold uppercase tracking-wide text-warning">
+                Demo
+              </Text>
+            </View>
+          ) : null}
+        </View>
 
         <View className="mt-6 w-full flex-row gap-3">
           <Card className="min-w-0 flex-1 items-center py-3.5">
@@ -75,13 +99,13 @@ export function ProfileScreen({ onSettings, onNotifications, onSignOut }: Profil
                   : ''
               }`}
             >
-              <View className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-surface-elevated dark:bg-surface-elevated-dark">
+              <View className="mr-3 h-9 w-9 items-center justify-center rounded-full bg-surface-elevated dark:bg-surface-elevated-dark">
                 <Ionicons name={item.icon} size={18} color={theme.primary} />
               </View>
-              <Text className="flex-1 text-base font-medium text-ink dark:text-ink-dark">
+              <Text className="flex-1 text-[15px] font-medium text-ink dark:text-ink-dark">
                 {item.label}
               </Text>
-              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+              <Ionicons name="chevron-forward" size={18} color={theme.textMuted} />
             </Pressable>
           ))}
         </Card>

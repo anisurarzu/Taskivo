@@ -6,7 +6,8 @@ import { ThemeProvider } from './ThemeProvider';
 import { useAuthStore } from '@/features/auth';
 import { usePreferencesStore } from '@/store/preferences-store';
 import { useFocusUiStore } from '@/features/focus';
-import { apiClient, isMockApi } from '@/services/api';
+import { API_CONFIG, isMockApi, setUnauthorizedHandler, wakeApi } from '@/services/api';
+import { NotificationsRealtime } from '@/features/notifications';
 
 interface Props {
   children: ReactNode;
@@ -14,17 +15,29 @@ interface Props {
 
 function AppHydrator({ children }: Props) {
   const hydrateAuth = useAuthStore((s) => s.hydrate);
+  const forceLogout = useAuthStore((s) => s.forceLogout);
   const hydratePrefs = usePreferencesStore((s) => s.hydrate);
   const setDurationMinutes = useFocusUiStore((s) => s.setDurationMinutes);
   const defaultFocusMinutes = usePreferencesStore((s) => s.defaultFocusMinutes);
   const prefsHydrated = usePreferencesStore((s) => s.hydrated);
 
   useEffect(() => {
+    setUnauthorizedHandler(() => {
+      void forceLogout();
+    });
+    return () => setUnauthorizedHandler(null);
+  }, [forceLogout]);
+
+  useEffect(() => {
     void hydrateAuth();
     hydratePrefs();
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log('[Taskivo] API', API_CONFIG.baseUrl, 'mock=', isMockApi());
+    }
     // Wake Render free tier before first login/register.
     if (!isMockApi()) {
-      void apiClient.get('/health').catch(() => undefined);
+      void wakeApi();
     }
   }, [hydrateAuth, hydratePrefs]);
 
@@ -33,7 +46,12 @@ function AppHydrator({ children }: Props) {
     setDurationMinutes(defaultFocusMinutes);
   }, [prefsHydrated, defaultFocusMinutes, setDurationMinutes]);
 
-  return <>{children}</>;
+  return (
+    <>
+      <NotificationsRealtime />
+      {children}
+    </>
+  );
 }
 
 export function AppProviders({ children }: Props) {

@@ -17,8 +17,8 @@ export function Card({
   return (
     <View
       className={cn(
-        'overflow-hidden rounded-card border border-border bg-card dark:border-border-dark dark:bg-card-dark',
-        elevated && 'shadow-soft',
+        'overflow-hidden rounded-xl border border-border/80 bg-card dark:border-border-dark dark:bg-card-dark',
+        elevated && 'shadow-card',
         padded && 'p-4',
         className,
       )}

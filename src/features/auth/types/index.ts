@@ -10,12 +10,15 @@ export type AuthUser = {
   email: string;
   emailVerified: boolean;
   avatarUrl?: string;
+  bio?: string;
 };
 
 export type AuthSession = {
   user: AuthUser;
   tokens: AuthTokens;
   rememberMe: boolean;
+  /** Present when session came from /auth/demo (read-only workspace). */
+  isDemo?: boolean;
 };
 
 export type LoginPayload = {

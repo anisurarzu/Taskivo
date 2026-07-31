@@ -13,14 +13,24 @@ export const focusKeys = {
 
 async function listSessions(): Promise<FocusSession[]> {
   if (isMockApi()) return focusService.list();
-  const { data } = await focusApi.list();
-  return data as FocusSession[];
+  try {
+    const { data } = await focusApi.list();
+    return data as FocusSession[];
+  } catch (error) {
+    const { getApiErrorMessage } = await import('@/services/api');
+    throw new Error(getApiErrorMessage(error, 'Unable to load focus sessions'));
+  }
 }
 
 async function createSession(input: CreateFocusSessionInput): Promise<FocusSession> {
   if (isMockApi()) return focusService.create(input);
-  const { data } = await focusApi.create(input);
-  return data as FocusSession;
+  try {
+    const { data } = await focusApi.create(input);
+    return data as FocusSession;
+  } catch (error) {
+    const { getApiErrorMessage } = await import('@/services/api');
+    throw new Error(getApiErrorMessage(error, 'Unable to save focus session'));
+  }
 }
 
 export function useFocusSessionsQuery() {

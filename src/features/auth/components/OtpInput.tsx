@@ -26,7 +26,7 @@ export function OtpInput({ value, onChange, length = 6, error }: OtpInputProps) 
   };
 
   return (
-    <View className="flex-row justify-between gap-2">
+    <View className="flex-row justify-between gap-2.5">
       {digits.map((digit, index) => (
         <TextInput
           key={index}
@@ -45,7 +45,7 @@ export function OtpInput({ value, onChange, length = 6, error }: OtpInputProps) 
           }}
           placeholderTextColor={colors.textMuted}
           className={cn(
-            'h-14 min-w-0 flex-1 rounded-xl border bg-card text-center text-xl font-bold text-ink dark:bg-card-dark dark:text-ink-dark',
+            'h-14 min-w-0 flex-1 rounded-2xl border bg-card text-center text-xl font-bold text-ink dark:bg-card-dark dark:text-ink-dark',
             error ? 'border-danger' : 'border-border dark:border-border-dark',
           )}
         />

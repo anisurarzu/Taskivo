@@ -21,20 +21,20 @@ export function AuthSuccess({
   onSecondary,
 }: AuthSuccessProps) {
   return (
-    <View className="flex-1 items-center justify-center px-2 py-10">
-      <View className="mb-6 h-20 w-20 items-center justify-center rounded-full bg-primary/15">
-        <Ionicons name="checkmark-circle" size={48} color={colors.primary} />
+    <View className="flex-1 items-center justify-center py-6">
+      <View className="mb-6 h-20 w-20 items-center justify-center rounded-3xl bg-primary/12">
+        <Ionicons name="checkmark-circle" size={40} color={colors.primary} />
       </View>
-      <Text className="mb-2 text-center text-2xl font-bold text-ink dark:text-ink-dark">
+      <Text className="mb-2 text-center text-[32px] font-bold leading-10 tracking-tight text-ink dark:text-ink-dark">
         {title}
       </Text>
-      <Text className="mb-8 text-center text-base leading-6 text-ink-secondary dark:text-ink-dark-secondary">
+      <Text className="mb-10 text-center text-[16px] leading-6 text-ink-secondary dark:text-ink-dark-secondary">
         {description}
       </Text>
-      <View className="w-full gap-3">
-        <PrimaryButton label={primaryLabel} onPress={onPrimary} />
+      <View className="w-full gap-3.5">
+        <PrimaryButton size="lg" label={primaryLabel} onPress={onPrimary} />
         {secondaryLabel && onSecondary ? (
-          <SecondaryButton label={secondaryLabel} onPress={onSecondary} />
+          <SecondaryButton size="lg" label={secondaryLabel} onPress={onSecondary} />
         ) : null}
       </View>
     </View>

@@ -14,7 +14,11 @@ export const ROUTES = {
   calendar: '/(tabs)/calendar',
   focus: '/(tabs)/focus',
   analytics: '/(tabs)/analytics',
+  organizations: '/(tabs)/organizations',
+  chat: '/(tabs)/chat',
+  budget: '/(tabs)/budget',
   profile: '/(tabs)/profile',
+  profileEdit: '/profile/edit',
   settings: '/settings',
   notifications: '/notifications',
   search: '/search',
@@ -38,3 +42,7 @@ export const CATEGORY_LABELS = {
   finance: 'Finance',
   other: 'Other',
 } as const;
+
+export function getCategoryLabel(category: string) {
+  return CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category;
+}

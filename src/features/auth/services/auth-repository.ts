@@ -1,5 +1,4 @@
-import axios from 'axios';
-import { isMockApi } from '@/services/api/config';
+import { getApiErrorMessage, isMockApi, wakeApi, withRetries } from '@/services/api';
 import { authApi } from '../api/auth-api';
 import { authService } from './auth-service';
 import type {
@@ -12,60 +11,74 @@ import type {
   VerifyOtpPayload,
 } from '../types';
 
-function apiErrorMessage(error: unknown, fallback: string) {
-  if (axios.isAxiosError(error)) {
-    if (error.code === 'ECONNABORTED') {
-      return 'Server is waking up. Wait a few seconds and try again.';
-    }
-    if (!error.response) {
-      return 'Cannot reach API. Check internet or try again in a moment.';
-    }
-    const message = (error.response?.data as { message?: string } | undefined)?.message;
-    if (message) return message;
-  }
-  if (error instanceof Error && error.message) return error.message;
-  return fallback;
-}
-
 /**
- * Auth data access — mock local service by default, real JWT API when mock is off.
+ * Auth data access — shared Taskivo-Web backend when mock is off.
  */
 export const authRepository = {
   async login(payload: LoginPayload): Promise<AuthSession> {
     if (isMockApi()) return authService.login(payload);
+    await wakeApi();
     try {
-      const { data } = await authApi.login(payload);
+      const { data } = await withRetries(() => authApi.login(payload));
       return data as AuthSession;
     } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Unable to sign in'));
+      throw new Error(getApiErrorMessage(error, 'Unable to sign in'));
+    }
+  },
+
+  async demoBrowse(): Promise<AuthSession> {
+    if (isMockApi()) {
+      return authService.login({
+        email: 'demo@taskivo.app',
+        password: 'Taskivo123',
+        rememberMe: true,
+      });
+    }
+    await wakeApi();
+    try {
+      const { data } = await withRetries(() => authApi.demoBrowse());
+      return data as AuthSession;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to open demo'));
     }
   },
 
   async register(
     payload: RegisterPayload,
-  ): Promise<{ user: AuthUser; requiresVerification: boolean }> {
+  ): Promise<{ user?: AuthUser; requiresVerification: boolean; email?: string; otpHint?: string }> {
     if (isMockApi()) return authService.register(payload);
+    await wakeApi();
     try {
-      const { data } = await authApi.register(payload);
-      return data as { user: AuthUser; requiresVerification: boolean };
+      const { data } = await withRetries(() => authApi.register(payload));
+      return data as {
+        user?: AuthUser;
+        requiresVerification: boolean;
+        email?: string;
+        otpHint?: string;
+      };
     } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Unable to create account'));
+      throw new Error(getApiErrorMessage(error, 'Unable to create account'));
     }
   },
 
   async sendVerificationEmail(email: string) {
     if (isMockApi()) return authService.sendVerificationEmail(email);
-    // Registration already creates OTP server-side.
-    return { success: true as const, email, message: 'Verification email sent' };
+    try {
+      const { data } = await authApi.resendOtp(email, 'register');
+      return data as { success: boolean; email: string; otpHint?: string };
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to resend code'));
+    }
   },
 
   async forgotPassword(payload: ForgotPasswordPayload) {
     if (isMockApi()) return authService.forgotPassword(payload);
+    await wakeApi();
     try {
-      const { data } = await authApi.forgotPassword(payload.email);
-      return data as { success: true; email: string };
+      const { data } = await withRetries(() => authApi.forgotPassword(payload.email));
+      return data as { success: true; email: string; otpHint?: string };
     } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Unable to send reset email'));
+      throw new Error(getApiErrorMessage(error, 'Unable to send reset email'));
     }
   },
 
@@ -77,24 +90,76 @@ export const authRepository = {
       return { success: true, email: payload.email };
     }
     try {
-      const { data } = await authApi.verifyOtp(payload.email, payload.otp, payload.purpose);
+      const { data } = await withRetries(() =>
+        authApi.verifyOtp(payload.email, payload.otp, payload.purpose),
+      );
       return data as { success: true; email: string; session?: AuthSession };
     } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Invalid code'));
+      throw new Error(getApiErrorMessage(error, 'Invalid code'));
     }
   },
 
   async resetPassword(payload: ResetPasswordPayload): Promise<AuthSession> {
     if (isMockApi()) return authService.resetPassword(payload);
     try {
-      const { data } = await authApi.resetPassword({
-        email: payload.email,
-        otp: payload.otp,
-        password: payload.password,
-      });
+      const { data } = await withRetries(() =>
+        authApi.resetPassword({
+          email: payload.email,
+          otp: payload.otp,
+          password: payload.password,
+        }),
+      );
       return data as AuthSession;
     } catch (error) {
-      throw new Error(apiErrorMessage(error, 'Unable to reset password'));
+      throw new Error(getApiErrorMessage(error, 'Unable to reset password'));
+    }
+  },
+
+  async refresh(refreshToken: string): Promise<AuthSession> {
+    if (isMockApi()) {
+      throw new Error('Refresh not available in mock mode');
+    }
+    try {
+      const { data } = await authApi.refresh(refreshToken);
+      return data as AuthSession;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Session expired'));
+    }
+  },
+
+  async me(): Promise<AuthUser> {
+    if (isMockApi()) {
+      throw new Error('Not available in mock mode');
+    }
+    try {
+      const { data } = await authApi.me();
+      return data as AuthUser;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to load profile'));
+    }
+  },
+
+  async updateProfile(body: { name?: string; bio?: string; avatarUrl?: string }): Promise<AuthUser> {
+    if (isMockApi()) {
+      throw new Error('Profile update not available in mock mode');
+    }
+    try {
+      const { data } = await authApi.updateProfile(body);
+      return data as AuthUser;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to update profile'));
+    }
+  },
+
+  async changePassword(body: { currentPassword: string; newPassword: string }) {
+    if (isMockApi()) {
+      throw new Error('Change password not available in mock mode');
+    }
+    try {
+      const { data } = await authApi.changePassword(body);
+      return data as { success: boolean };
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to change password'));
     }
   },
 

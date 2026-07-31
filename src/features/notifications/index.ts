@@ -10,3 +10,5 @@ export {
   useMarkNotificationsReadMutation,
   useRequestNotificationPermissionMutation,
 } from './hooks/useNotifications';
+export { notificationsApi } from './api/notifications-api';
+export { NotificationsRealtime } from './components/NotificationsRealtime';

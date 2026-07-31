@@ -15,6 +15,7 @@ interface AuthState {
   user: AuthUser | null;
   session: AuthSession | null;
   isAuthenticated: boolean;
+  isDemo: boolean;
   hasCompletedOnboarding: boolean;
   isHydrated: boolean;
   isLoading: boolean;
@@ -27,11 +28,16 @@ interface AuthState {
   hydrate: () => Promise<void>;
   completeOnboarding: () => void;
   login: (payload: LoginPayload) => Promise<void>;
+  loginDemo: () => Promise<void>;
+  refreshSession: () => Promise<boolean>;
+  forceLogout: () => Promise<void>;
   register: (payload: RegisterPayload) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   verifyOtp: (otp: string) => Promise<'reset' | 'authenticated'>;
   resetPassword: (payload: Omit<ResetPasswordPayload, 'email' | 'otp'>) => Promise<void>;
   markEmailVerified: () => void;
+  updateProfile: (input: { name?: string; bio?: string; avatarUrl?: string }) => Promise<void>;
+  changePassword: (input: { currentPassword: string; newPassword: string }) => Promise<void>;
   logout: () => Promise<void>;
   clearError: () => void;
   setFlowEmail: (email: string) => void;
@@ -41,6 +47,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   session: null,
   isAuthenticated: false,
+  isDemo: false,
   hasCompletedOnboarding: false,
   isHydrated: false,
   isLoading: false,
@@ -53,12 +60,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   hydrate: async () => {
     const onboarding = authStorage.getOnboardingCompleted();
-    const session = await authStorage.getSession();
+    let session = await authStorage.getSession();
+
+    // Proactively refresh if access token is near expiry (shared web backend).
+    if (session?.tokens.refreshToken && session.tokens.expiresAt < Date.now() + 60_000) {
+      try {
+        session = await authRepository.refresh(session.tokens.refreshToken);
+        await authStorage.saveSession(session);
+      } catch {
+        await authStorage.clearSession();
+        session = null;
+      }
+    }
+
     set({
       hasCompletedOnboarding: onboarding,
       session,
       user: session?.user ?? null,
       isAuthenticated: Boolean(session?.tokens.accessToken),
+      isDemo:
+        Boolean(session?.isDemo) ||
+        session?.user.email.toLowerCase() === 'demo@taskivo.app',
       isHydrated: true,
     });
   },
@@ -77,6 +99,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         session,
         user: session.user,
         isAuthenticated: true,
+        isDemo:
+          Boolean(session.isDemo) ||
+          session.user.email.toLowerCase() === 'demo@taskivo.app',
         isLoading: false,
         flowStep: 'authenticated',
         flowPurpose: null,
@@ -89,6 +114,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
       throw error;
     }
+  },
+
+  loginDemo: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const session = await authRepository.demoBrowse();
+      await authStorage.saveSession(session);
+      set({
+        session,
+        user: session.user,
+        isAuthenticated: true,
+        isDemo: true,
+        isLoading: false,
+        flowStep: 'authenticated',
+        flowPurpose: null,
+        pendingPassword: null,
+      });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Unable to open demo',
+      });
+      throw error;
+    }
+  },
+
+  refreshSession: async () => {
+    const refreshToken = get().session?.tokens.refreshToken;
+    if (!refreshToken) return false;
+    try {
+      const session = await authRepository.refresh(refreshToken);
+      await authStorage.saveSession(session);
+      set({
+        session,
+        user: session.user,
+        isAuthenticated: true,
+      });
+      return true;
+    } catch {
+      await get().forceLogout();
+      return false;
+    }
+  },
+
+  forceLogout: async () => {
+    await authStorage.clearSession();
+    set({
+      user: null,
+      session: null,
+      isAuthenticated: false,
+      isDemo: false,
+      isLoading: false,
+      flowStep: 'idle',
+      flowEmail: null,
+      flowOtp: null,
+      flowPurpose: null,
+      pendingPassword: null,
+      error: null,
+    });
   },
 
   register: async (payload) => {
@@ -250,6 +334,41 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     });
   },
 
+  updateProfile: async (input) => {
+    set({ isLoading: true, error: null });
+    try {
+      const user = await authRepository.updateProfile(input);
+      const session = get().session;
+      if (session) {
+        const next = { ...session, user };
+        await authStorage.saveSession(next);
+        set({ session: next, user, isLoading: false });
+      } else {
+        set({ user, isLoading: false });
+      }
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Unable to update profile',
+      });
+      throw error;
+    }
+  },
+
+  changePassword: async (input) => {
+    set({ isLoading: true, error: null });
+    try {
+      await authRepository.changePassword(input);
+      set({ isLoading: false });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Unable to change password',
+      });
+      throw error;
+    }
+  },
+
   logout: async () => {
     set({ isLoading: true, error: null });
     try {
@@ -259,6 +378,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: null,
         session: null,
         isAuthenticated: false,
+        isDemo: false,
         isLoading: false,
         flowStep: 'idle',
         flowEmail: null,

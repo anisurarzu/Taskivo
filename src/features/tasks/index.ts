@@ -14,6 +14,11 @@ export {
   useUpdateTaskMutation,
   useToggleTaskMutation,
   useDeleteTaskMutation,
+  useStartTrackingMutation,
+  useBreakTrackingMutation,
+  useResumeTrackingMutation,
+  useEndTrackingMutation,
+  useCompleteTrackingMutation,
 } from './hooks/useTaskQueries';
 export {
   getTodayTasks,

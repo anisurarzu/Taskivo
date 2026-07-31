@@ -8,7 +8,7 @@ import { SectionHeader, Loading } from '@/components/ui';
 import { cn } from '@/utils/cn';
 import { formatTime } from '@/utils/format';
 import { colors } from '@/theme/colors';
-import { CATEGORY_LABELS } from '@/constants';
+import { getCategoryLabel } from '@/constants';
 import { useThemeColors } from '@/hooks';
 import {
   getEventDaysInMonth,
@@ -223,7 +223,7 @@ export function CalendarScreen({ onTaskPress }: CalendarScreenProps) {
                     {task.title}
                   </Text>
                   <Text className="mt-0.5 text-[11px] text-ink-muted">
-                    {CATEGORY_LABELS[task.category]}
+                    {getCategoryLabel(task.category)}
                   </Text>
                 </View>
                 <Ionicons name="chevron-forward" size={14} color={theme.textMuted} />

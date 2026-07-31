@@ -7,7 +7,7 @@ import { Card } from '@/components/cards';
 import { IconButton, PrimaryButton, SecondaryButton } from '@/components/buttons';
 import { AppModal } from '@/components/modals';
 import { Loading, EmptyState } from '@/components/ui';
-import { CATEGORY_LABELS, PRIORITY_LABELS } from '@/constants';
+import { PRIORITY_LABELS, getCategoryLabel } from '@/constants';
 import { formatDate, formatTime } from '@/utils/format';
 import { useThemeColors } from '@/hooks';
 import { cn } from '@/utils/cn';
@@ -17,6 +17,7 @@ import {
   useToggleTaskMutation,
   useUpdateTaskMutation,
 } from '../hooks/useTaskQueries';
+import { TaskTrackingControls } from '../components/TaskTrackingControls';
 
 interface TaskDetailsScreenProps {
   taskId: string;
@@ -110,7 +111,7 @@ export function TaskDetailsScreen({
           </View>
           <View className="rounded-full bg-surface-elevated px-3 py-1 dark:bg-surface-elevated-dark">
             <Text className="text-xs font-semibold text-ink-secondary dark:text-ink-dark-secondary">
-              {CATEGORY_LABELS[task.category]}
+              {getCategoryLabel(task.category)}
             </Text>
           </View>
           {task.isCompleted ? (
@@ -123,12 +124,84 @@ export function TaskDetailsScreen({
         <Text className="mb-3 text-3xl font-bold text-ink dark:text-ink-dark">{task.title}</Text>
 
         {task.description?.trim() ? (
-          <Text className="mb-8 text-base leading-7 text-ink-secondary dark:text-ink-dark-secondary">
+          <Text className="mb-6 text-[16px] leading-7 text-ink-secondary dark:text-ink-dark-secondary">
             {task.description}
           </Text>
         ) : (
-          <View className="mb-8" />
+          <View className="mb-4" />
         )}
+
+        {(task.budgetId ||
+          (typeof task.budgetAllocated === 'number' && task.budgetAllocated > 0)) && (
+          <Card className="mb-5">
+            <View className="flex-row items-center">
+              <View className="mr-3 h-11 w-11 items-center justify-center rounded-xl bg-primary/10">
+                <Ionicons name="wallet-outline" size={20} color={colors.primary} />
+              </View>
+              <View className="min-w-0 flex-1">
+                <Text className="text-[14px] font-medium text-ink-secondary dark:text-ink-dark-secondary">
+                  Budget
+                </Text>
+                <Text className="mt-0.5 text-[17px] font-semibold text-ink dark:text-ink-dark">
+                  {typeof task.budgetAllocated === 'number'
+                    ? task.budgetAllocated.toLocaleString()
+                    : 'Linked'}
+                  {task.budgetId ? ' allocated' : ''}
+                </Text>
+              </View>
+            </View>
+          </Card>
+        )}
+
+        {typeof task.tracking?.progressPct === 'number' || task.subtasks?.length ? (
+          <Card className="mb-5">
+            <View className="mb-2 flex-row items-center justify-between">
+              <Text className="text-[15px] font-semibold text-ink dark:text-ink-dark">
+                Progress
+              </Text>
+              <Text className="text-[15px] font-bold text-ink dark:text-ink-dark">
+                {typeof task.tracking?.progressPct === 'number'
+                  ? Math.round(task.tracking.progressPct)
+                  : task.subtasks?.length
+                    ? Math.round(
+                        (task.subtasks.filter((s) => s.isCompleted).length /
+                          task.subtasks.length) *
+                          100,
+                      )
+                    : task.isCompleted
+                      ? 100
+                      : 0}
+                %
+              </Text>
+            </View>
+            <View className="h-2.5 overflow-hidden rounded-full bg-surface-elevated dark:bg-surface-elevated-dark">
+              <View
+                className="h-full rounded-full bg-primary"
+                style={{
+                  width: `${Math.max(
+                    0,
+                    Math.min(
+                      100,
+                      typeof task.tracking?.progressPct === 'number'
+                        ? Math.round(task.tracking.progressPct)
+                        : task.subtasks?.length
+                          ? Math.round(
+                              (task.subtasks.filter((s) => s.isCompleted).length /
+                                task.subtasks.length) *
+                                100,
+                            )
+                          : task.isCompleted
+                            ? 100
+                            : 0,
+                    ),
+                  )}%`,
+                }}
+              />
+            </View>
+          </Card>
+        ) : null}
+
+        <TaskTrackingControls task={task} />
 
         <Card className="mb-6">
           {[

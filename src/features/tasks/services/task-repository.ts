@@ -1,40 +1,117 @@
-import { isMockApi } from '@/services/api/config';
+import { getApiErrorMessage, isMockApi } from '@/services/api';
 import { taskApi } from '../api/task-api';
 import { taskService } from './task-service';
 import type { CreateTaskInput, Task, TaskListFilter, UpdateTaskInput } from '../types';
 
 /**
- * Single entry for task data access.
- * Mock by default; set EXPO_PUBLIC_USE_MOCK_API=false to use Axios API.
+ * Task data access — shared Taskivo-Web backend when mock is off.
  */
 export const taskRepository = {
-  list(filter?: TaskListFilter): Promise<Task[]> {
+  async list(filter?: TaskListFilter): Promise<Task[]> {
     if (isMockApi()) return taskService.list(filter);
-    return taskApi.list(filter).then((res) => res.data as Task[]);
+    try {
+      const { data } = await taskApi.list(filter);
+      return data as Task[];
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to load tasks'));
+    }
   },
 
-  getById(id: string): Promise<Task | null> {
+  async getById(id: string): Promise<Task | null> {
     if (isMockApi()) return taskService.getById(id);
-    return taskApi.getById(id).then((res) => res.data as Task);
+    try {
+      const { data } = await taskApi.getById(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to load task'));
+    }
   },
 
-  create(input: CreateTaskInput): Promise<Task> {
+  async create(input: CreateTaskInput): Promise<Task> {
     if (isMockApi()) return taskService.create(input);
-    return taskApi.create(input).then((res) => res.data as Task);
+    try {
+      const { data } = await taskApi.create(input);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to create task'));
+    }
   },
 
-  update(id: string, input: UpdateTaskInput): Promise<Task> {
+  async update(id: string, input: UpdateTaskInput): Promise<Task> {
     if (isMockApi()) return taskService.update(id, input);
-    return taskApi.update(id, input).then((res) => res.data as Task);
+    try {
+      const { data } = await taskApi.update(id, input);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to update task'));
+    }
   },
 
-  toggleComplete(id: string): Promise<Task> {
+  async toggleComplete(id: string): Promise<Task> {
     if (isMockApi()) return taskService.toggleComplete(id);
-    return taskApi.toggleComplete(id).then((res) => res.data as Task);
+    try {
+      const { data } = await taskApi.toggleComplete(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to update task'));
+    }
   },
 
-  remove(id: string): Promise<void> {
+  async remove(id: string): Promise<void> {
     if (isMockApi()) return taskService.remove(id);
-    return taskApi.remove(id).then(() => undefined);
+    try {
+      await taskApi.remove(id);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to delete task'));
+    }
+  },
+  async trackingStart(id: string): Promise<Task> {
+    if (isMockApi()) throw new Error('Tracking requires live API');
+    try {
+      const { data } = await taskApi.trackingStart(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to start tracking'));
+    }
+  },
+
+  async trackingBreak(id: string, plannedBreakMinutes?: number): Promise<Task> {
+    if (isMockApi()) throw new Error('Tracking requires live API');
+    try {
+      const { data } = await taskApi.trackingBreak(id, { plannedBreakMinutes });
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to start break'));
+    }
+  },
+
+  async trackingResume(id: string): Promise<Task> {
+    if (isMockApi()) throw new Error('Tracking requires live API');
+    try {
+      const { data } = await taskApi.trackingResume(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to resume'));
+    }
+  },
+
+  async trackingEnd(id: string): Promise<Task> {
+    if (isMockApi()) throw new Error('Tracking requires live API');
+    try {
+      const { data } = await taskApi.trackingEnd(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to end tracking'));
+    }
+  },
+
+  async trackingComplete(id: string): Promise<Task> {
+    if (isMockApi()) throw new Error('Tracking requires live API');
+    try {
+      const { data } = await taskApi.trackingComplete(id);
+      return data as Task;
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error, 'Unable to complete tracking'));
+    }
   },
 };

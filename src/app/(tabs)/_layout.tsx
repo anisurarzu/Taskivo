@@ -9,7 +9,7 @@ export default function TabsLayout() {
   const theme = useThemeColors();
   const isDark = useIsDark();
   const insets = useSafeAreaInsets();
-  const bottom = Math.max(insets.bottom, 8);
+  const bottom = Math.max(insets.bottom, 6);
 
   return (
     <ProtectedRoute>
@@ -21,18 +21,17 @@ export default function TabsLayout() {
           tabBarStyle: {
             backgroundColor: theme.surface,
             borderTopColor: theme.border,
-            height: 54 + bottom,
+            borderTopWidth: 0.5,
+            height: 56 + bottom,
             paddingTop: 6,
             paddingBottom: bottom,
-            elevation: 8,
-            shadowColor: '#0F172A',
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            shadowOffset: { width: 0, height: -2 },
+            elevation: 0,
+            shadowOpacity: 0,
           },
           tabBarLabelStyle: {
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: '600',
+            marginTop: 2,
           },
           sceneStyle: {
             backgroundColor: isDark ? colors.backgroundDark : colors.background,
@@ -49,12 +48,12 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="calendar"
+          name="organizations"
           options={{
-            title: 'Calendar',
+            title: 'Orgs',
             tabBarIcon: ({ color, size, focused }) => (
               <Ionicons
-                name={focused ? 'calendar' : 'calendar-outline'}
+                name={focused ? 'people' : 'people-outline'}
                 color={color}
                 size={size}
               />
@@ -62,21 +61,25 @@ export default function TabsLayout() {
           }}
         />
         <Tabs.Screen
-          name="focus"
+          name="chat"
           options={{
-            title: 'Focus',
+            title: 'Chat',
             tabBarIcon: ({ color, size, focused }) => (
-              <Ionicons name={focused ? 'timer' : 'timer-outline'} color={color} size={size} />
+              <Ionicons
+                name={focused ? 'chatbubbles' : 'chatbubbles-outline'}
+                color={color}
+                size={size}
+              />
             ),
           }}
         />
         <Tabs.Screen
-          name="analytics"
+          name="budget"
           options={{
-            title: 'Analytics',
+            title: 'Budget',
             tabBarIcon: ({ color, size, focused }) => (
               <Ionicons
-                name={focused ? 'stats-chart' : 'stats-chart-outline'}
+                name={focused ? 'wallet' : 'wallet-outline'}
                 color={color}
                 size={size}
               />
@@ -92,6 +95,9 @@ export default function TabsLayout() {
             ),
           }}
         />
+        <Tabs.Screen name="focus" options={{ href: null }} />
+        <Tabs.Screen name="calendar" options={{ href: null }} />
+        <Tabs.Screen name="analytics" options={{ href: null }} />
       </Tabs>
     </ProtectedRoute>
   );

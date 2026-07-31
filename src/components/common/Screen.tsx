@@ -26,7 +26,7 @@ export function Screen({
   ...props
 }: ScreenProps) {
   const insets = useSafeAreaInsets();
-  const bottomPad = tabBar ? Math.max(insets.bottom, 8) + 64 : 24;
+  const bottomPad = tabBar ? Math.max(insets.bottom, 10) + 72 : 32;
 
   const body = (
     <View className={cn(padded && 'px-5', contentClassName)}>{children}</View>

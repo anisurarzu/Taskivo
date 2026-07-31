@@ -1,12 +1,12 @@
 export const radius = {
   none: 0,
-  sm: 8,
-  md: 12,
-  lg: 18,
-  xl: 24,
-  card: 20,
-  '2xl': 28,
-  '3xl': 32,
+  sm: 6,
+  md: 8,
+  lg: 10,
+  xl: 12,
+  card: 12,
+  '2xl': 16,
+  '3xl': 20,
   full: 9999,
 } as const;
 

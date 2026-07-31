@@ -17,7 +17,7 @@ interface IconButtonProps extends PressableProps {
 
 export function IconButton({
   name,
-  size = 18,
+  size = 20,
   variant = 'ghost',
   className,
   iconColor,
@@ -37,7 +37,7 @@ export function IconButton({
     variant === 'filled'
       ? 'bg-primary'
       : variant === 'soft'
-        ? 'bg-primary/10 dark:bg-primary/20'
+        ? 'bg-surface-elevated dark:bg-surface-elevated-dark'
         : 'bg-transparent';
 
   const resolvedIconColor =
@@ -60,7 +60,7 @@ export function IconButton({
       }}
       style={animatedStyle}
       className={cn(
-        'h-9 w-9 items-center justify-center rounded-lg',
+        'h-10 w-10 items-center justify-center rounded-full',
         variantClass,
         disabled && 'opacity-40',
         className,

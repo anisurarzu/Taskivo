@@ -3,8 +3,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { PrimaryButton, SecondaryButton } from '@/components/buttons';
-import { Screen } from '@/components/common';
+import { AuthShell } from '../components/AuthShell';
 import { AuthHeader } from '../components/AuthHeader';
+import { AuthErrorBanner } from '../components/AuthErrorBanner';
 import { OtpInput } from '../components/OtpInput';
 import { AuthSuccess } from '../components/AuthSuccess';
 import { useVerifyOtpMutation } from '../hooks/useAuthMutations';
@@ -46,28 +47,28 @@ export function OtpVerificationScreen({
         onResetContinue();
       }
     } catch {
-      // store error
+      // store
     }
   });
 
   if (registered) {
     return (
-      <Screen scroll>
+      <AuthShell>
         <AuthSuccess
           title="You’re verified"
           description="Your email is confirmed and your Taskivo account is ready."
           primaryLabel="Go to home"
           onPrimary={onAuthenticated}
         />
-      </Screen>
+      </AuthShell>
     );
   }
 
   return (
-    <Screen scroll>
-      <Animated.View entering={FadeInDown.duration(420)}>
+    <AuthShell>
+      <Animated.View entering={FadeInDown.duration(380).springify().damping(18)}>
         <AuthHeader
-          title="Enter verification code"
+          title="Enter code"
           subtitle={`We sent a 6-digit code to ${email ?? 'your email'}${
             purpose === 'register' ? ' to finish signup' : ''
           }.`}
@@ -80,22 +81,27 @@ export function OtpVerificationScreen({
           render={({ field: { value, onChange }, fieldState: { error } }) => (
             <View className="mb-4">
               <OtpInput value={value} onChange={onChange} error={Boolean(error || storeError)} />
-              {error ? <Text className="mt-2 text-sm text-danger">{error.message}</Text> : null}
+              {error ? <Text className="mt-2 text-[13px] text-danger">{error.message}</Text> : null}
             </View>
           )}
         />
 
-        <Text className="mb-5 text-sm text-ink-muted">
+        <Text className="mb-6 text-[15px] text-ink-muted">
           Demo code: <Text className="font-semibold text-primary">{MOCK_AUTH_OTP}</Text>
         </Text>
 
-        {storeError ? <Text className="mb-3 text-sm text-danger">{storeError}</Text> : null}
+        {storeError ? <AuthErrorBanner message={storeError} /> : null}
 
-        <View className="gap-3">
-          <PrimaryButton label="Verify code" loading={mutation.isPending} onPress={onSubmit} />
-          <SecondaryButton label="Back" onPress={onBack} />
+        <View className="gap-3.5">
+          <PrimaryButton
+            size="lg"
+            label="Verify code"
+            loading={mutation.isPending}
+            onPress={onSubmit}
+          />
+          <SecondaryButton size="lg" label="Back" onPress={onBack} />
         </View>
       </Animated.View>
-    </Screen>
+    </AuthShell>
   );
 }
